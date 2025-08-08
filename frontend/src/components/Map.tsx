@@ -55,17 +55,30 @@ const Map: React.FC = () => {
   }, []);
 
   return (
-    <section className="py-12">
-      <div className="max-w-6xl mx-auto px-4">
-        <h2 className="text-2xl font-bold text-deep-blue mb-1">
-          {mapTitle || "Find Us"}
-        </h2>
-        <p className="text-gray-600 mb-4">{mapSubtitle || "Hotel Annapurna"}</p>
+    <section className="py-16 bg-gradient-to-br from-gray-50 to-white">
+      {/* Full-width map container */}
+      <div className="w-full">
+        {/* Map header with content */}
+        <div className="max-w-6xl mx-auto px-4 mb-8 animate-fadeIn">
+          <div className="text-center">
+            <h2 className="text-4xl font-bold text-deep-blue mb-3">
+              {mapTitle || "Find Us"}
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              {mapSubtitle ||
+                "Discover our location in the heart of the Himalayas"}
+            </p>
+          </div>
+        </div>
 
-        <div className="w-full h-[450px] rounded-lg overflow-hidden shadow relative bg-gray-100">
+        {/* Full-width map */}
+        <div className="w-full h-[600px] relative bg-gray-100 animate-mapLoad">
           {loading ? (
-            <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-              Loading map...
+            <div className="absolute inset-0 flex items-center justify-center text-gray-500 bg-white">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-deep-blue mx-auto mb-4"></div>
+                <p className="text-lg">Loading map...</p>
+              </div>
             </div>
           ) : (
             <iframe
@@ -75,38 +88,39 @@ const Map: React.FC = () => {
               frameBorder={0}
               scrolling="no"
               src={embedUrl}
+              className="w-full h-full"
             />
           )}
-          {/* Visual label overlay for clarity (moved away from zoom controls) */}
+
+          {/* Modern floating location badge */}
           {!loading && (
-            <div className="absolute top-3 right-3 bg-white/90 text-gray-800 px-3 py-1 rounded shadow">
-              {OSM_NODE.name}
+            <div className="absolute top-6 right-6 bg-white/95 backdrop-blur-sm text-deep-blue px-4 py-3 rounded-xl shadow-lg border border-gray-200 animate-float">
+              <div className="flex items-center space-x-3">
+                <div className="w-3 h-3 bg-vibrant-pink rounded-full animate-pulse"></div>
+                <div>
+                  <p className="font-semibold text-sm">{OSM_NODE.name}</p>
+                  <p className="text-xs text-gray-600">📍 Current Location</p>
+                </div>
+              </div>
             </div>
           )}
         </div>
-        <p className="text-sm text-gray-500 mt-2">
-          View larger map on {""}
-          <a
-            href={viewUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="text-blue-600 hover:underline"
-          >
-            OpenStreetMap
-          </a>
-          .
-        </p>
 
-        {/* Newsletter subscription moved from footer */}
-        <div className="mt-8 bg-white border rounded-lg p-4 grid gap-3 md:grid-cols-[1fr_auto] items-center">
-          <input
-            type="email"
-            placeholder="Subscribe to Newsletter"
-            className="p-2 w-full bg-white text-gray-800 rounded border-2 border-gray-300 focus:border-vibrant-pink focus:outline-none"
-          />
-          <button className="bg-vibrant-pink text-white px-4 py-2 rounded">
-            Subscribe
-          </button>
+        {/* Map footer with external link */}
+        <div className="max-w-6xl mx-auto px-4 mt-6 animate-fadeIn">
+          <div className="text-center">
+            <p className="text-sm text-gray-500">
+              View larger map on{" "}
+              <a
+                href={viewUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-deep-blue hover:text-vibrant-pink font-medium transition-colors duration-200 underline decoration-2 underline-offset-2 hover:animate-shimmer"
+              >
+                OpenStreetMap
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     </section>

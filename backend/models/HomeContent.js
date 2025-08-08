@@ -66,9 +66,12 @@ const homeContentSchema = new mongoose.Schema({
       default:
         "Got questions? We've got answers! Here are the most common questions our guests ask.",
     },
-    callCta: { type: String, default: "📞 Call: +977-123-456-789" },
-    chatCta: { type: String, default: "💬 Live Chat Support" },
-    emailCta: { type: String, default: "📧 Email: info@hotelannapurna.com" },
+    callCta: { type: String, default: "\ud83d\udcde Call: +977-123-456-789" },
+    chatCta: { type: String, default: "\ud83d\udcac Live Chat Support" },
+    emailCta: {
+      type: String,
+      default: "\ud83d\udce7 Email: info@hotelannapurna.com",
+    },
   },
   footer: {
     email: { type: String, default: "info@hotelannapurnasamar.com" },
@@ -87,6 +90,51 @@ const homeContentSchema = new mongoose.Schema({
   map: {
     title: { type: String, default: "Find Us" },
     subtitle: { type: String, default: "Hotel Annapurna" },
+  },
+  // New Subscribe/Newsletter section
+  subscribe: {
+    title: { type: String, default: "Stay Connected" },
+    subtitle: {
+      type: String,
+      default:
+        "Get exclusive updates about our seasonal experiences, special offers, and the latest from the heart of the Himalayas delivered straight to your inbox.",
+    },
+    placeholder: { type: String, default: "Enter your email address" },
+    buttonText: { type: String, default: "Subscribe" },
+    disclaimer: {
+      type: String,
+      default: "\ud83d\udd12 We respect your privacy. Unsubscribe at any time.",
+    },
+    theme: { type: String, default: "light" }, // 'light' | 'dark'
+    benefits: [
+      {
+        icon: { type: String, default: "\ud83d\udce7" },
+        image: { type: String, default: "" },
+        title: { type: String, default: "Weekly Updates" },
+        description: {
+          type: String,
+          default: "Stay informed about our latest offerings",
+        },
+      },
+      {
+        icon: { type: String, default: "\ud83c\udf81" },
+        image: { type: String, default: "" },
+        title: { type: String, default: "Exclusive Offers" },
+        description: {
+          type: String,
+          default: "Special deals for our subscribers only",
+        },
+      },
+      {
+        icon: { type: String, default: "\ud83c\udfd4\ufe0f" },
+        image: { type: String, default: "" },
+        title: { type: String, default: "Mountain Stories" },
+        description: {
+          type: String,
+          default: "Behind-the-scenes from the Himalayas",
+        },
+      },
+    ],
   },
   updatedAt: { type: Date, default: Date.now },
 });

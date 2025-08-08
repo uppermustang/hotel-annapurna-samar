@@ -16,6 +16,34 @@ interface HeroContent {
   }[];
 }
 
+// Defaults for Subscribe editor so fields are populated even if DB document lacks the section
+const DEFAULT_SUBSCRIBE = {
+  title: "Stay Connected",
+  subtitle:
+    "Get exclusive updates about our seasonal experiences, special offers, and the latest from the heart of the Himalayas delivered straight to your inbox.",
+  placeholder: "Enter your email address",
+  buttonText: "Subscribe",
+  disclaimer: "🔒 We respect your privacy. Unsubscribe at any time.",
+  theme: "light",
+  benefits: [
+    {
+      icon: "📧",
+      title: "Weekly Updates",
+      description: "Stay informed about our latest offerings",
+    },
+    {
+      icon: "🎁",
+      title: "Exclusive Offers",
+      description: "Special deals for our subscribers only",
+    },
+    {
+      icon: "🏔️",
+      title: "Mountain Stories",
+      description: "Behind-the-scenes from the Himalayas",
+    },
+  ],
+};
+
 const HeroSectionManager: React.FC = () => {
   const [content, setContent] = useState<HeroContent>({
     title: "A Mountain Haven",
@@ -92,10 +120,20 @@ const HeroSectionManager: React.FC = () => {
         const res = await fetch("http://localhost:5000/api/home");
         if (res.ok) {
           const data = await res.json();
-          setHomeContent(data);
+          // Merge defaults so subscribe editor shows meaningful values
+          const merged = {
+            ...data,
+            subscribe: { ...DEFAULT_SUBSCRIBE, ...(data?.subscribe || {}) },
+          };
+          setHomeContent(merged);
         }
       } catch (e) {
         console.error("Error loading home content:", e);
+        // If fetch fails, still initialize editor with subscribe defaults
+        setHomeContent((prev: any) => ({
+          ...(prev || {}),
+          subscribe: DEFAULT_SUBSCRIBE,
+        }));
       }
     })();
   }, []);
@@ -636,7 +674,11 @@ const HeroSectionManager: React.FC = () => {
                       <button
                         type="button"
                         className="text-red-600"
-                        onClick={() =>
+                        onClick={() => {
+                          const isConfirmed = window.confirm(
+                            "Are you sure you want to remove this brand?"
+                          );
+                          if (!isConfirmed) return;
                           setHomeContent((prev: any) => ({
                             ...prev,
                             trustBadges: {
@@ -645,8 +687,8 @@ const HeroSectionManager: React.FC = () => {
                                 (_: any, i: number) => i !== idx
                               ),
                             },
-                          }))
-                        }
+                          }));
+                        }}
                       >
                         Remove
                       </button>
@@ -734,91 +776,359 @@ const HeroSectionManager: React.FC = () => {
               <label className="block text-sm text-gray-600 mb-1">
                 Culinary Title
               </label>
-              <input
-                type="text"
-                value={homeContent?.culinary?.title || ""}
-                onChange={(e) =>
-                  setHomeContent((prev: any) => ({
-                    ...prev,
-                    culinary: {
-                      ...(prev?.culinary || {}),
-                      title: e.target.value,
-                    },
-                  }))
-                }
-                className="w-full border rounded p-2"
-              />
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={homeContent?.culinary?.title || ""}
+                    onChange={(e) =>
+                      setHomeContent((prev: any) => ({
+                        ...prev,
+                        culinary: {
+                          ...(prev?.culinary || {}),
+                          title: e.target.value,
+                        },
+                      }))
+                    }
+                    className="w-full border rounded p-2"
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    const currentValue = homeContent?.culinary?.title || "";
+                    const newValue = prompt(
+                      "Edit Culinary Title:",
+                      currentValue
+                    );
+                    if (newValue !== null) {
+                      setHomeContent((prev: any) => ({
+                        ...prev,
+                        culinary: {
+                          ...(prev?.culinary || {}),
+                          title: newValue,
+                        },
+                      }));
+                    }
+                  }}
+                  className="ml-2 text-blue-500 hover:text-blue-600"
+                >
+                  <FaEdit />
+                </button>
+              </div>
             </div>
             <div>
               <label className="block text-sm text-gray-600 mb-1">
-                Footer Email
+                Culinary Section 1 Title
               </label>
-              <input
-                type="text"
-                value={homeContent?.footer?.email || ""}
-                onChange={(e) =>
-                  setHomeContent((prev: any) => ({
-                    ...prev,
-                    footer: { ...(prev?.footer || {}), email: e.target.value },
-                  }))
-                }
-                className="w-full border rounded p-2"
-              />
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={homeContent?.culinary?.section1Title || ""}
+                    onChange={(e) =>
+                      setHomeContent((prev: any) => ({
+                        ...prev,
+                        culinary: {
+                          ...(prev?.culinary || {}),
+                          section1Title: e.target.value,
+                        },
+                      }))
+                    }
+                    className="w-full border rounded p-2"
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    const currentValue =
+                      homeContent?.culinary?.section1Title || "";
+                    const newValue = prompt(
+                      "Edit Section 1 Title:",
+                      currentValue
+                    );
+                    if (newValue !== null) {
+                      setHomeContent((prev: any) => ({
+                        ...prev,
+                        culinary: {
+                          ...(prev?.culinary || {}),
+                          section1Title: newValue,
+                        },
+                      }));
+                    }
+                  }}
+                  className="ml-2 text-blue-500 hover:text-blue-600"
+                >
+                  <FaEdit />
+                </button>
+              </div>
             </div>
             <div>
               <label className="block text-sm text-gray-600 mb-1">
-                Footer Phone
+                Culinary Section 1 Text
               </label>
-              <input
-                type="text"
-                value={homeContent?.footer?.phone || ""}
-                onChange={(e) =>
-                  setHomeContent((prev: any) => ({
-                    ...prev,
-                    footer: { ...(prev?.footer || {}), phone: e.target.value },
-                  }))
-                }
-                className="w-full border rounded p-2"
-              />
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex-1">
+                  <textarea
+                    value={homeContent?.culinary?.section1Text || ""}
+                    onChange={(e) =>
+                      setHomeContent((prev: any) => ({
+                        ...prev,
+                        culinary: {
+                          ...(prev?.culinary || {}),
+                          section1Text: e.target.value,
+                        },
+                      }))
+                    }
+                    className="w-full border rounded p-2"
+                    rows={3}
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    const currentValue =
+                      homeContent?.culinary?.section1Text || "";
+                    const newValue = prompt(
+                      "Edit Section 1 Text:",
+                      currentValue
+                    );
+                    if (newValue !== null) {
+                      setHomeContent((prev: any) => ({
+                        ...prev,
+                        culinary: {
+                          ...(prev?.culinary || {}),
+                          section1Text: newValue,
+                        },
+                      }));
+                    }
+                  }}
+                  className="ml-2 text-blue-500 hover:text-blue-600"
+                >
+                  <FaEdit />
+                </button>
+              </div>
             </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">
+                Culinary Section 2 Title
+              </label>
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={homeContent?.culinary?.section2Title || ""}
+                    onChange={(e) =>
+                      setHomeContent((prev: any) => ({
+                        ...prev,
+                        culinary: {
+                          ...(prev?.culinary || {}),
+                          section2Title: e.target.value,
+                        },
+                      }))
+                    }
+                    className="w-full border rounded p-2"
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    const currentValue =
+                      homeContent?.culinary?.section2Title || "";
+                    const newValue = prompt(
+                      "Edit Section 2 Title:",
+                      currentValue
+                    );
+                    if (newValue !== null) {
+                      setHomeContent((prev: any) => ({
+                        ...prev,
+                        culinary: {
+                          ...(prev?.culinary || {}),
+                          section2Title: newValue,
+                        },
+                      }));
+                    }
+                  }}
+                  className="ml-2 text-blue-500 hover:text-blue-600"
+                >
+                  <FaEdit />
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">
+                Culinary Section 2 Text
+              </label>
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex-1">
+                  <textarea
+                    value={homeContent?.culinary?.section2Text || ""}
+                    onChange={(e) =>
+                      setHomeContent((prev: any) => ({
+                        ...prev,
+                        culinary: {
+                          ...(prev?.culinary || {}),
+                          section2Text: e.target.value,
+                        },
+                      }))
+                    }
+                    className="w-full border rounded p-2"
+                    rows={3}
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    const currentValue =
+                      homeContent?.culinary?.section2Text || "";
+                    const newValue = prompt(
+                      "Edit Section 2 Text:",
+                      currentValue
+                    );
+                    if (newValue !== null) {
+                      setHomeContent((prev: any) => ({
+                        ...prev,
+                        culinary: {
+                          ...(prev?.culinary || {}),
+                          section2Text: newValue,
+                        },
+                      }));
+                    }
+                  }}
+                  className="ml-2 text-blue-500 hover:text-blue-600"
+                >
+                  <FaEdit />
+                </button>
+              </div>
+            </div>
+
             {/* Culinary images */}
             <div>
               <label className="block text-sm text-gray-600 mb-1">
                 Culinary Section 1 Image URL
               </label>
-              <input
-                type="text"
-                value={homeContent?.culinary?.section1Image || ""}
-                onChange={(e) =>
-                  setHomeContent((prev: any) => ({
-                    ...prev,
-                    culinary: {
-                      ...(prev?.culinary || {}),
-                      section1Image: e.target.value,
-                    },
-                  }))
-                }
-                className="w-full border rounded p-2"
-              />
+              <div className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  value={homeContent?.culinary?.section1Image || ""}
+                  onChange={(e) =>
+                    setHomeContent((prev: any) => ({
+                      ...prev,
+                      culinary: {
+                        ...(prev?.culinary || {}),
+                        section1Image: e.target.value,
+                      },
+                    }))
+                  }
+                  className="flex-1 border rounded p-2"
+                />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const formData = new FormData();
+                      formData.append("files", file);
+                      try {
+                        const response = await fetch(
+                          "http://localhost:5000/api/media/upload",
+                          {
+                            method: "POST",
+                            body: formData,
+                          }
+                        );
+                        const data = await response.json();
+                        if (response.ok && data && data[0]) {
+                          const imageUrl = `http://localhost:5000${data[0].path}`;
+                          setHomeContent((prev: any) => ({
+                            ...prev,
+                            culinary: {
+                              ...(prev?.culinary || {}),
+                              section1Image: imageUrl,
+                            },
+                          }));
+                          alert("Image uploaded successfully!");
+                        } else {
+                          alert("Failed to upload image");
+                        }
+                      } catch (error) {
+                        console.error("Error uploading image:", error);
+                        alert("Error uploading image");
+                      }
+                    }
+                  }}
+                  className="hidden"
+                  id="culinary-section1-upload"
+                />
+                <label
+                  htmlFor="culinary-section1-upload"
+                  className="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 cursor-pointer text-sm"
+                >
+                  📁 Upload
+                </label>
+              </div>
             </div>
             <div>
               <label className="block text-sm text-gray-600 mb-1">
                 Culinary Section 2 Image URL
               </label>
-              <input
-                type="text"
-                value={homeContent?.culinary?.section2Image || ""}
-                onChange={(e) =>
-                  setHomeContent((prev: any) => ({
-                    ...prev,
-                    culinary: {
-                      ...(prev?.culinary || {}),
-                      section2Image: e.target.value,
-                    },
-                  }))
-                }
-                className="w-full border rounded p-2"
-              />
+              <div className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  value={homeContent?.culinary?.section2Image || ""}
+                  onChange={(e) =>
+                    setHomeContent((prev: any) => ({
+                      ...prev,
+                      culinary: {
+                        ...(prev?.culinary || {}),
+                        section2Image: e.target.value,
+                      },
+                    }))
+                  }
+                  className="flex-1 border rounded p-2"
+                />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const formData = new FormData();
+                      formData.append("files", file);
+                      try {
+                        const response = await fetch(
+                          "http://localhost:5000/api/media/upload",
+                          {
+                            method: "POST",
+                            body: formData,
+                          }
+                        );
+                        const data = await response.json();
+                        if (response.ok && data && data[0]) {
+                          const imageUrl = `http://localhost:5000${data[0].path}`;
+                          setHomeContent((prev: any) => ({
+                            ...prev,
+                            culinary: {
+                              ...(prev?.culinary || {}),
+                              section2Image: imageUrl,
+                            },
+                          }));
+                          alert("Image uploaded successfully!");
+                        } else {
+                          alert("Failed to upload image");
+                        }
+                      } catch (error) {
+                        console.error("Error uploading image:", error);
+                        alert("Error uploading image");
+                      }
+                    }
+                  }}
+                  className="hidden"
+                  id="culinary-section2-upload"
+                />
+                <label
+                  htmlFor="culinary-section2-upload"
+                  className="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 cursor-pointer text-sm"
+                >
+                  📁 Upload
+                </label>
+              </div>
             </div>
             {/* Testimonials title already handled, add map titles */}
             <div>
@@ -854,6 +1164,892 @@ const HeroSectionManager: React.FC = () => {
               />
             </div>
           </div>
+
+          {/* Subscribe Section */}
+          <div className="mt-8 border-t pt-6">
+            <h4 className="text-lg font-semibold mb-4 text-gray-800">
+              Subscribe Section
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">
+                  Title
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={homeContent?.subscribe?.title || ""}
+                    onChange={(e) =>
+                      setHomeContent((prev: any) => ({
+                        ...prev,
+                        subscribe: {
+                          ...(prev?.subscribe || {}),
+                          title: e.target.value,
+                        },
+                      }))
+                    }
+                    className="w-full border border-gray-300 bg-white text-gray-800 rounded p-2"
+                  />
+                  <button
+                    onClick={() => {
+                      const current = homeContent?.subscribe?.title || "";
+                      const next = prompt("Edit Subscribe Title:", current);
+                      if (next !== null) {
+                        setHomeContent((prev: any) => ({
+                          ...prev,
+                          subscribe: {
+                            ...(prev?.subscribe || {}),
+                            title: next,
+                          },
+                        }));
+                      }
+                    }}
+                    className="text-blue-500 hover:text-blue-600"
+                  >
+                    <FaEdit />
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">
+                  Subtitle
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={homeContent?.subscribe?.subtitle || ""}
+                    onChange={(e) =>
+                      setHomeContent((prev: any) => ({
+                        ...prev,
+                        subscribe: {
+                          ...(prev?.subscribe || {}),
+                          subtitle: e.target.value,
+                        },
+                      }))
+                    }
+                    className="w-full border border-gray-300 bg-white text-gray-800 rounded p-2"
+                  />
+                  <button
+                    onClick={() => {
+                      const current = homeContent?.subscribe?.subtitle || "";
+                      const next = prompt("Edit Subscribe Subtitle:", current);
+                      if (next !== null) {
+                        setHomeContent((prev: any) => ({
+                          ...prev,
+                          subscribe: {
+                            ...(prev?.subscribe || {}),
+                            subtitle: next,
+                          },
+                        }));
+                      }
+                    }}
+                    className="text-blue-500 hover:text-blue-600"
+                  >
+                    <FaEdit />
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">
+                  Email Placeholder
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={homeContent?.subscribe?.placeholder || ""}
+                    onChange={(e) =>
+                      setHomeContent((prev: any) => ({
+                        ...prev,
+                        subscribe: {
+                          ...(prev?.subscribe || {}),
+                          placeholder: e.target.value,
+                        },
+                      }))
+                    }
+                    className="w-full border border-gray-300 bg-white text-gray-800 rounded p-2"
+                  />
+                  <button
+                    onClick={() => {
+                      const current = homeContent?.subscribe?.placeholder || "";
+                      const next = prompt("Edit Email Placeholder:", current);
+                      if (next !== null) {
+                        setHomeContent((prev: any) => ({
+                          ...prev,
+                          subscribe: {
+                            ...(prev?.subscribe || {}),
+                            placeholder: next,
+                          },
+                        }));
+                      }
+                    }}
+                    className="text-blue-500 hover:text-blue-600"
+                  >
+                    <FaEdit />
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">
+                  Button Text
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={homeContent?.subscribe?.buttonText || ""}
+                    onChange={(e) =>
+                      setHomeContent((prev: any) => ({
+                        ...prev,
+                        subscribe: {
+                          ...(prev?.subscribe || {}),
+                          buttonText: e.target.value,
+                        },
+                      }))
+                    }
+                    className="w-full border border-gray-300 bg-white text-gray-800 rounded p-2"
+                  />
+                  <button
+                    onClick={() => {
+                      const current = homeContent?.subscribe?.buttonText || "";
+                      const next = prompt("Edit Button Text:", current);
+                      if (next !== null) {
+                        setHomeContent((prev: any) => ({
+                          ...prev,
+                          subscribe: {
+                            ...(prev?.subscribe || {}),
+                            buttonText: next,
+                          },
+                        }));
+                      }
+                    }}
+                    className="text-blue-500 hover:text-blue-600"
+                  >
+                    <FaEdit />
+                  </button>
+                </div>
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm text-gray-600 mb-1">
+                  Disclaimer
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={homeContent?.subscribe?.disclaimer || ""}
+                    onChange={(e) =>
+                      setHomeContent((prev: any) => ({
+                        ...prev,
+                        subscribe: {
+                          ...(prev?.subscribe || {}),
+                          disclaimer: e.target.value,
+                        },
+                      }))
+                    }
+                    className="w-full border border-gray-300 bg-white text-gray-800 rounded p-2"
+                  />
+                  <button
+                    onClick={() => {
+                      const current = homeContent?.subscribe?.disclaimer || "";
+                      const next = prompt("Edit Disclaimer:", current);
+                      if (next !== null) {
+                        setHomeContent((prev: any) => ({
+                          ...prev,
+                          subscribe: {
+                            ...(prev?.subscribe || {}),
+                            disclaimer: next,
+                          },
+                        }));
+                      }
+                    }}
+                    className="text-blue-500 hover:text-blue-600"
+                  >
+                    <FaEdit />
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">
+                  Theme
+                </label>
+                <select
+                  value={homeContent?.subscribe?.theme || "light"}
+                  onChange={(e) =>
+                    setHomeContent((prev: any) => ({
+                      ...prev,
+                      subscribe: {
+                        ...(prev?.subscribe || {}),
+                        theme: e.target.value,
+                      },
+                    }))
+                  }
+                  className="w-full border border-gray-300 bg-white text-gray-800 rounded p-2"
+                >
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Benefits list */}
+            <div className="mt-4">
+              <h5 className="font-medium text-gray-700 mb-3">Benefits</h5>
+              <div className="space-y-4">
+                {(homeContent?.subscribe?.benefits || []).map(
+                  (b: any, idx: number) => (
+                    <div
+                      key={idx}
+                      className="grid grid-cols-1 md:grid-cols-6 gap-2 items-center"
+                    >
+                      <input
+                        type="text"
+                        placeholder="Icon (emoji)"
+                        value={b.icon || ""}
+                        onChange={(e) =>
+                          setHomeContent((prev: any) => {
+                            const benefits = [
+                              ...(prev?.subscribe?.benefits || []),
+                            ];
+                            benefits[idx] = {
+                              ...(benefits[idx] || {}),
+                              icon: e.target.value,
+                            };
+                            return {
+                              ...prev,
+                              subscribe: {
+                                ...(prev?.subscribe || {}),
+                                benefits,
+                              },
+                            };
+                          })
+                        }
+                        className="border border-gray-300 bg-white text-gray-800 rounded p-2"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Title"
+                        value={b.title || ""}
+                        onChange={(e) =>
+                          setHomeContent((prev: any) => {
+                            const benefits = [
+                              ...(prev?.subscribe?.benefits || []),
+                            ];
+                            benefits[idx] = {
+                              ...(benefits[idx] || {}),
+                              title: e.target.value,
+                            };
+                            return {
+                              ...prev,
+                              subscribe: {
+                                ...(prev?.subscribe || {}),
+                                benefits,
+                              },
+                            };
+                          })
+                        }
+                        className="border border-gray-300 bg-white text-gray-800 rounded p-2"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Description"
+                        value={b.description || ""}
+                        onChange={(e) =>
+                          setHomeContent((prev: any) => {
+                            const benefits = [
+                              ...(prev?.subscribe?.benefits || []),
+                            ];
+                            benefits[idx] = {
+                              ...(benefits[idx] || {}),
+                              description: e.target.value,
+                            };
+                            return {
+                              ...prev,
+                              subscribe: {
+                                ...(prev?.subscribe || {}),
+                                benefits,
+                              },
+                            };
+                          })
+                        }
+                        className="border border-gray-300 bg-white text-gray-800 rounded p-2 md:col-span-2"
+                      />
+
+                      {/* Image upload for optional benefit image */}
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          placeholder="Image URL or /uploads/... (optional)"
+                          value={b.image || ""}
+                          onChange={(e) =>
+                            setHomeContent((prev: any) => {
+                              const benefits = [
+                                ...(prev?.subscribe?.benefits || []),
+                              ];
+                              benefits[idx] = {
+                                ...(benefits[idx] || {}),
+                                image: e.target.value,
+                              };
+                              return {
+                                ...prev,
+                                subscribe: {
+                                  ...(prev?.subscribe || {}),
+                                  benefits,
+                                },
+                              };
+                            })
+                          }
+                          className="border border-gray-300 bg-white text-gray-800 rounded p-2 w-full"
+                        />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const formData = new FormData();
+                            formData.append("files", file);
+                            try {
+                              const resp = await fetch(
+                                "http://localhost:5000/api/media/upload",
+                                { method: "POST", body: formData }
+                              );
+                              const data = await resp.json();
+                              if (resp.ok && data && data[0]) {
+                                const imageUrl = `http://localhost:5000${data[0].path}`;
+                                setHomeContent((prev: any) => {
+                                  const benefits = [
+                                    ...(prev?.subscribe?.benefits || []),
+                                  ];
+                                  benefits[idx] = {
+                                    ...(benefits[idx] || {}),
+                                    image: imageUrl,
+                                  };
+                                  return {
+                                    ...prev,
+                                    subscribe: {
+                                      ...(prev?.subscribe || {}),
+                                      benefits,
+                                    },
+                                  };
+                                });
+                                alert("Image uploaded successfully!");
+                              } else {
+                                alert("Failed to upload image");
+                              }
+                            } catch (err) {
+                              alert("Error uploading image");
+                            }
+                          }}
+                          className="hidden"
+                          id={`subscribe-benefit-upload-${idx}`}
+                        />
+                        <label
+                          htmlFor={`subscribe-benefit-upload-${idx}`}
+                          className="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 cursor-pointer text-sm"
+                        >
+                          📁 Upload
+                        </label>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="text-red-600"
+                        onClick={() => {
+                          const isConfirmed = window.confirm(
+                            "Remove this benefit?"
+                          );
+                          if (!isConfirmed) return;
+                          setHomeContent((prev: any) => ({
+                            ...prev,
+                            subscribe: {
+                              ...(prev?.subscribe || {}),
+                              benefits: (
+                                prev?.subscribe?.benefits || []
+                              ).filter((_: any, i: number) => i !== idx),
+                            },
+                          }));
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )
+                )}
+                <button
+                  type="button"
+                  className="text-blue-600"
+                  onClick={() =>
+                    setHomeContent((prev: any) => ({
+                      ...prev,
+                      subscribe: {
+                        ...(prev?.subscribe || {}),
+                        benefits: [
+                          ...(prev?.subscribe?.benefits || []),
+                          { icon: "", title: "", description: "", image: "" },
+                        ],
+                      },
+                    }))
+                  }
+                >
+                  + Add Benefit
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer Section - Repositioned below Map and Culinary sections */}
+          <div className="mt-8 border-t pt-6">
+            <h4 className="text-lg font-semibold mb-4 text-gray-800">
+              Footer Content
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Contact Us Section */}
+              <div className="md:col-span-2">
+                <h5 className="font-medium text-gray-700 mb-3">Contact Us</h5>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">
+                      Email
+                    </label>
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          value={homeContent?.footer?.email || ""}
+                          onChange={(e) =>
+                            setHomeContent((prev: any) => ({
+                              ...prev,
+                              footer: {
+                                ...(prev?.footer || {}),
+                                email: e.target.value,
+                              },
+                            }))
+                          }
+                          className="w-full border rounded p-2"
+                        />
+                      </div>
+                      <button
+                        onClick={() => {
+                          const currentValue = homeContent?.footer?.email || "";
+                          const newValue = prompt(
+                            "Edit Footer Email:",
+                            currentValue
+                          );
+                          if (newValue !== null) {
+                            setHomeContent((prev: any) => ({
+                              ...prev,
+                              footer: {
+                                ...(prev?.footer || {}),
+                                email: newValue,
+                              },
+                            }));
+                          }
+                        }}
+                        className="ml-2 text-blue-500 hover:text-blue-600"
+                      >
+                        <FaEdit />
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">
+                      Phone
+                    </label>
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          value={homeContent?.footer?.phone || ""}
+                          onChange={(e) =>
+                            setHomeContent((prev: any) => ({
+                              ...prev,
+                              footer: {
+                                ...(prev?.footer || {}),
+                                phone: e.target.value,
+                              },
+                            }))
+                          }
+                          className="w-full border rounded p-2"
+                        />
+                      </div>
+                      <button
+                        onClick={() => {
+                          const currentValue = homeContent?.footer?.phone || "";
+                          const newValue = prompt(
+                            "Edit Footer Phone:",
+                            currentValue
+                          );
+                          if (newValue !== null) {
+                            setHomeContent((prev: any) => ({
+                              ...prev,
+                              footer: {
+                                ...(prev?.footer || {}),
+                                phone: newValue,
+                              },
+                            }));
+                          }
+                        }}
+                        className="ml-2 text-blue-500 hover:text-blue-600"
+                      >
+                        <FaEdit />
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">
+                      Newsletter Placeholder
+                    </label>
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          value={
+                            homeContent?.footer?.newsletterPlaceholder || ""
+                          }
+                          onChange={(e) =>
+                            setHomeContent((prev: any) => ({
+                              ...prev,
+                              footer: {
+                                ...(prev?.footer || {}),
+                                newsletterPlaceholder: e.target.value,
+                              },
+                            }))
+                          }
+                          className="w-full border rounded p-2"
+                        />
+                      </div>
+                      <button
+                        onClick={() => {
+                          const currentValue =
+                            homeContent?.footer?.newsletterPlaceholder || "";
+                          const newValue = prompt(
+                            "Edit Newsletter Placeholder:",
+                            currentValue
+                          );
+                          if (newValue !== null) {
+                            setHomeContent((prev: any) => ({
+                              ...prev,
+                              footer: {
+                                ...(prev?.footer || {}),
+                                newsletterPlaceholder: newValue,
+                              },
+                            }));
+                          }
+                        }}
+                        className="ml-2 text-blue-500 hover:text-blue-600"
+                      >
+                        <FaEdit />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Links Section */}
+              <div className="md:col-span-2">
+                <h5 className="font-medium text-gray-700 mb-3">Quick Links</h5>
+                <div className="space-y-3">
+                  {(homeContent?.footer?.links || []).map(
+                    (link: any, idx: number) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          placeholder="Link text"
+                          value={link.text || ""}
+                          onChange={(e) =>
+                            setHomeContent((prev: any) => {
+                              const links = [...(prev?.footer?.links || [])];
+                              links[idx] = {
+                                ...(links[idx] || {}),
+                                text: e.target.value,
+                              };
+                              return {
+                                ...prev,
+                                footer: {
+                                  ...(prev?.footer || {}),
+                                  links,
+                                },
+                              };
+                            })
+                          }
+                          className="w-48 border rounded p-2"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Link URL"
+                          value={link.url || ""}
+                          onChange={(e) =>
+                            setHomeContent((prev: any) => {
+                              const links = [...(prev?.footer?.links || [])];
+                              links[idx] = {
+                                ...(links[idx] || {}),
+                                url: e.target.value,
+                              };
+                              return {
+                                ...prev,
+                                footer: {
+                                  ...(prev?.footer || {}),
+                                  links,
+                                },
+                              };
+                            })
+                          }
+                          className="flex-1 border rounded p-2"
+                        />
+                        <button
+                          type="button"
+                          className="text-red-600"
+                          onClick={() => {
+                            const isConfirmed =
+                              window.confirm("Remove this link?");
+                            if (!isConfirmed) return;
+                            setHomeContent((prev: any) => ({
+                              ...prev,
+                              footer: {
+                                ...(prev?.footer || {}),
+                                links: (prev?.footer?.links || []).filter(
+                                  (_: any, i: number) => i !== idx
+                                ),
+                              },
+                            }));
+                          }}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )
+                  )}
+                  <button
+                    type="button"
+                    className="text-blue-600"
+                    onClick={() =>
+                      setHomeContent((prev: any) => ({
+                        ...prev,
+                        footer: {
+                          ...(prev?.footer || {}),
+                          links: [
+                            ...(prev?.footer?.links || []),
+                            { text: "", url: "" },
+                          ],
+                        },
+                      }))
+                    }
+                  >
+                    + Add Link
+                  </button>
+                </div>
+              </div>
+
+              {/* Follow Us Section */}
+              <div className="md:col-span-2">
+                <h5 className="font-medium text-gray-700 mb-3">Follow Us</h5>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">
+                      Facebook URL
+                    </label>
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          value={homeContent?.footer?.social?.facebook || ""}
+                          onChange={(e) =>
+                            setHomeContent((prev: any) => ({
+                              ...prev,
+                              footer: {
+                                ...(prev?.footer || {}),
+                                social: {
+                                  ...(prev?.footer?.social || {}),
+                                  facebook: e.target.value,
+                                },
+                              },
+                            }))
+                          }
+                          className="w-full border rounded p-2"
+                        />
+                      </div>
+                      <button
+                        onClick={() => {
+                          const currentValue =
+                            homeContent?.footer?.social?.facebook || "";
+                          const newValue = prompt(
+                            "Edit Facebook URL:",
+                            currentValue
+                          );
+                          if (newValue !== null) {
+                            setHomeContent((prev: any) => ({
+                              ...prev,
+                              footer: {
+                                ...(prev?.footer || {}),
+                                social: {
+                                  ...(prev?.footer?.social || {}),
+                                  facebook: newValue,
+                                },
+                              },
+                            }));
+                          }
+                        }}
+                        className="ml-2 text-blue-500 hover:text-blue-600"
+                      >
+                        <FaEdit />
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">
+                      Twitter URL
+                    </label>
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          value={homeContent?.footer?.social?.twitter || ""}
+                          onChange={(e) =>
+                            setHomeContent((prev: any) => ({
+                              ...prev,
+                              footer: {
+                                ...(prev?.footer || {}),
+                                social: {
+                                  ...(prev?.footer?.social || {}),
+                                  twitter: e.target.value,
+                                },
+                              },
+                            }))
+                          }
+                          className="w-full border rounded p-2"
+                        />
+                      </div>
+                      <button
+                        onClick={() => {
+                          const currentValue =
+                            homeContent?.footer?.social?.twitter || "";
+                          const newValue = prompt(
+                            "Edit Twitter URL:",
+                            currentValue
+                          );
+                          if (newValue !== null) {
+                            setHomeContent((prev: any) => ({
+                              ...prev,
+                              footer: {
+                                ...(prev?.footer || {}),
+                                social: {
+                                  ...(prev?.footer?.social || {}),
+                                  twitter: newValue,
+                                },
+                              },
+                            }));
+                          }
+                        }}
+                        className="ml-2 text-blue-500 hover:text-blue-600"
+                      >
+                        <FaEdit />
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">
+                      Instagram URL
+                    </label>
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          value={homeContent?.footer?.social?.instagram || ""}
+                          onChange={(e) =>
+                            setHomeContent((prev: any) => ({
+                              ...prev,
+                              footer: {
+                                ...(prev?.footer || {}),
+                                social: {
+                                  ...(prev?.footer?.social || {}),
+                                  instagram: e.target.value,
+                                },
+                              },
+                            }))
+                          }
+                          className="w-full border rounded p-2"
+                        />
+                      </div>
+                      <button
+                        onClick={() => {
+                          const currentValue =
+                            homeContent?.footer?.social?.instagram || "";
+                          const newValue = prompt(
+                            "Edit Instagram URL:",
+                            currentValue
+                          );
+                          if (newValue !== null) {
+                            setHomeContent((prev: any) => ({
+                              ...prev,
+                              footer: {
+                                ...(prev?.footer || {}),
+                                social: {
+                                  ...(prev?.footer?.social || {}),
+                                  instagram: newValue,
+                                },
+                              },
+                            }));
+                          }
+                        }}
+                        className="ml-2 text-blue-500 hover:text-blue-600"
+                      >
+                        <FaEdit />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Copyright Section */}
+              <div className="md:col-span-2">
+                <h5 className="font-medium text-gray-700 mb-3">Copyright</h5>
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">
+                    Copyright Text
+                  </label>
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={homeContent?.footer?.copyright || ""}
+                        onChange={(e) =>
+                          setHomeContent((prev: any) => ({
+                            ...prev,
+                            footer: {
+                              ...(prev?.footer || {}),
+                              copyright: e.target.value,
+                            },
+                          }))
+                        }
+                        className="w-full border rounded p-2"
+                      />
+                    </div>
+                    <button
+                      onClick={() => {
+                        const currentValue =
+                          homeContent?.footer?.copyright || "";
+                        const newValue = prompt(
+                          "Edit Copyright Text:",
+                          currentValue
+                        );
+                        if (newValue !== null) {
+                          setHomeContent((prev: any) => ({
+                            ...prev,
+                            footer: {
+                              ...(prev?.footer || {}),
+                              copyright: newValue,
+                            },
+                          }));
+                        }
+                      }}
+                      className="ml-2 text-blue-500 hover:text-blue-600"
+                    >
+                      <FaEdit />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="flex justify-end mt-4">
             <button
               onClick={async () => {

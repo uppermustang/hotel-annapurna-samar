@@ -95,40 +95,91 @@ code {
   }
 }
 
+/* Map and Subscribe specific animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes mapLoad {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes subscribeGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(216, 27, 96, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(216, 27, 96, 0.6), 0 0 60px rgba(216, 27, 96, 0.4);
+  }
+}
+
 .animate-fadeIn {
   animation: fadeIn 0.6s ease-out;
 }
 
 .animate-slideInLeft {
-  animation: slideInLeft 0.8s ease-out;
+  animation: slideInLeft 0.6s ease-out;
 }
 
 .animate-slideInRight {
-  animation: slideInRight 0.8s ease-out;
+  animation: slideInRight 0.6s ease-out;
 }
 
-.pulse-glow {
-  animation: pulse-glow 2s infinite;
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
 }
 
-/* Floating Action Button */
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.animate-mapLoad {
+  animation: mapLoad 0.8s ease-out;
+}
+
+.animate-subscribeGlow {
+  animation: subscribeGlow 2s ease-in-out infinite;
+}
+
+/* Floating CTA Button */
 .floating-cta {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom: 2rem;
+  right: 2rem;
   z-index: 1000;
-  background: linear-gradient(135deg, #d81b60, #a61c3c);
-  color: white;
-  border-radius: 50px;
-  padding: 15px 25px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  transform: translateY(0);
-  transition: all 0.3s ease;
+  animation: float 3s ease-in-out infinite;
 }
 
 .floating-cta:hover {
+  animation: none;
   transform: translateY(-5px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
 }
 
 /* Scroll Progress Bar */
@@ -136,113 +187,94 @@ code {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 4px;
-  background: linear-gradient(90deg, #d81b60, #a61c3c);
-  transform-origin: left;
-  z-index: 9999;
+  width: 0%;
+  height: 3px;
+  background: linear-gradient(90deg, #D81B60, #2E4A3A);
+  z-index: 1001;
+  transition: width 0.1s ease;
 }
 
-/* Custom Gradient Backgrounds */
+/* Gradient backgrounds */
 .gradient-hero {
-  background: linear-gradient(
-    135deg,
-    rgba(26, 42, 68, 0.9) 0%,
-    rgba(46, 74, 58, 0.8) 50%,
-    rgba(166, 28, 60, 0.9) 100%
-  );
+  background: linear-gradient(135deg, #1A2A44 0%, #2E4A3A 50%, #A61C3C 100%);
 }
 
 .gradient-cta {
-  background: linear-gradient(135deg, #d81b60 0%, #a61c3c 100%);
+  background: linear-gradient(135deg, #D81B60 0%, #A61C3C 100%);
 }
 
-/* Parallax Effect */
+/* Parallax effect */
 .parallax {
-  transform: translateZ(0);
-  will-change: transform;
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
-/* Hover Effects */
+/* Hover lift effect */
 .hover-lift {
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .hover-lift:hover {
-  transform: translateY(-10px) scale(1.02);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
 }
 
-/* Form Elements Contrast Fix */
+/* Form styling */
 select,
-input[type="date"],
-input[type="email"],
-input[type="text"],
-input[type="number"] {
-  background-color: white !important;
-  color: #1f2937 !important; /* gray-800 */
+input,
+textarea {
+  @apply border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-vibrant-pink focus:border-transparent transition-all duration-200;
 }
 
 select option {
-  background-color: white !important;
-  color: #1f2937 !important; /* gray-800 */
+  @apply bg-white text-gray-800;
 }
 
-/* Placeholder text visibility */
 input::placeholder,
-select::placeholder {
-  color: #6b7280 !important; /* gray-500 */
-  opacity: 1 !important;
+textarea::placeholder {
+  @apply text-gray-400;
 }
 
-/* Dark mode compatibility for forms */
+/* Dark mode support */
 @media (prefers-color-scheme: dark) {
   select,
-  input[type="date"],
-  input[type="email"],
-  input[type="text"],
-  input[type="number"] {
-    background-color: white !important;
-    color: #1f2937 !important;
-    border-color: #d1d5db !important;
+  input,
+  textarea {
+    @apply bg-gray-800 border-gray-600 text-white;
   }
 
   select option {
-    background-color: white !important;
-    color: #1f2937 !important;
+    @apply bg-gray-800 text-white;
   }
 }
 
+/* Focus styles */
 select:focus,
-input[type="date"]:focus,
-input[type="email"]:focus,
-input[type="text"]:focus,
-input[type="number"]:focus {
-  background-color: white !important;
-  color: #1f2937 !important;
+input:focus,
+textarea:focus {
+  @apply outline-none ring-2 ring-vibrant-pink ring-opacity-50;
 }
 
-/* Accessibility Improvements */
 .focus-visible {
-  outline: 3px solid #d81b60;
-  outline-offset: 2px;
+  @apply outline-none ring-2 ring-vibrant-pink ring-opacity-50;
 }
 
-/* High contrast mode support */
+/* High contrast mode */
 @media (prefers-contrast: high) {
   .text-shadow,
   .text-shadow-light,
   .text-shadow-strong {
-    text-shadow: 2px 2px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000,
-      -2px 2px 0px #000;
+    text-shadow: none;
   }
 
   .bg-vibrant-pink {
-    background-color: #c41e3a !important;
+    background-color: #000;
   }
 
   .bg-warm-red {
-    background-color: #8b0000 !important;
+    background-color: #000;
   }
 }
 
@@ -257,14 +289,14 @@ input[type="number"]:focus {
   }
 
   .parallax {
-    transform: none !important;
+    background-attachment: scroll;
   }
 }
 
-/* Loading Spinner */
+/* Loading spinner */
 .spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #d81b60;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #D81B60;
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -272,10 +304,7 @@ input[type="number"]:focus {
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
+  to {
     transform: rotate(360deg);
   }
 }

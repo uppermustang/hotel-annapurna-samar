@@ -9,6 +9,7 @@ import Culinary from "../components/Culinary";
 import Testimonials from "../components/Testimonials";
 import FAQ from "../components/FAQ";
 import Map from "../components/Map";
+import Subscribe from "../components/Subscribe";
 import Footer from "../components/Footer";
 
 const Home: React.FC = () => {
@@ -23,7 +24,14 @@ const Home: React.FC = () => {
         <Culinary />
         <Testimonials />
         <FAQ />
-        <Map />
+
+        {/* Location & Contact Section */}
+        <div className="bg-gray-50">
+          <Map />
+        </div>
+
+        {/* Newsletter Subscription Section - Distinct from Map */}
+        <Subscribe />
       </main>
       <Footer />
     </div>

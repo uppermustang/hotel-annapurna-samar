@@ -6,6 +6,8 @@ import Bookings from "./Bookings";
 import Calendar from "./Calender";
 import BlogEditor from "./BlogEditor";
 import PageEditor from "./PageEditor";
+import ExperiencesEditor from "./ExperiencesEditor";
+import CulinaryEditor from "./CulinaryEditor";
 
 const AdminDashboard = () => {
   return (
@@ -18,6 +20,8 @@ const AdminDashboard = () => {
           <Tab>Calendar</Tab>
           <Tab>Blog</Tab>
           <Tab>Page Editor</Tab>
+          <Tab>Experiences</Tab>
+          <Tab>Culinary</Tab>
         </TabList>
         <TabPanel>
           <MediaUpload />
@@ -36,6 +40,12 @@ const AdminDashboard = () => {
         </TabPanel>
         <TabPanel>
           <PageEditor />
+        </TabPanel>
+        <TabPanel>
+          <ExperiencesEditor />
+        </TabPanel>
+        <TabPanel>
+          <CulinaryEditor />
         </TabPanel>
       </Tabs>
     </div>
