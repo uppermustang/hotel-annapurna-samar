@@ -27,6 +27,22 @@ const SocialProof: React.FC = () => {
     return () => clearInterval(interval);
   }, [recentBookings.length]);
 
+  const [heading, setHeading] = useState<string | null>(null);
+  const [subheading, setSubheading] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/home");
+        if (res.ok) {
+          const data = await res.json();
+          setHeading(data?.socialProof?.heading || null);
+          setSubheading(data?.socialProof?.subheading || null);
+        }
+      } catch {}
+    })();
+  }, []);
+
   return (
     <section className="py-16 bg-gray-50 relative">
       {/* Live Booking Notification */}
@@ -52,10 +68,11 @@ const SocialProof: React.FC = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold text-deep-blue mb-4">
-            Join 2,500+ Happy Guests
+            {heading || "Join 2,500+ Happy Guests"}
           </h2>
           <p className="text-xl text-gray-600">
-            See what our guests are saying about their unforgettable experiences
+            {subheading ||
+              "See what our guests are saying about their unforgettable experiences"}
           </p>
         </div>
 

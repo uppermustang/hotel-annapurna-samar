@@ -54,6 +54,7 @@ const HeroSectionManager: React.FC = () => {
   const [tempContent, setTempContent] = useState<string>("");
   const [selectedBenefit, setSelectedBenefit] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [homeContent, setHomeContent] = useState<any>(null);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [libraryItems, setLibraryItems] = useState<
     {
@@ -85,6 +86,18 @@ const HeroSectionManager: React.FC = () => {
     };
 
     loadSavedContent();
+    // Load home content
+    (async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/home");
+        if (res.ok) {
+          const data = await res.json();
+          setHomeContent(data);
+        }
+      } catch (e) {
+        console.error("Error loading home content:", e);
+      }
+    })();
   }, []);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -373,6 +386,48 @@ const HeroSectionManager: React.FC = () => {
           )}
         </div>
 
+        {/* Call To Action */}
+        <div className="border rounded-lg p-4">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="font-semibold">Call To Action</h3>
+            {editingField === "callToAction" ? (
+              <div className="flex gap-2">
+                <button
+                  onClick={saveEdit}
+                  className="text-green-500 hover:text-green-600"
+                >
+                  <FaSave />
+                </button>
+                <button
+                  onClick={() => setEditingField(null)}
+                  className="text-red-500 hover:text-red-600"
+                >
+                  <FaTimes />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() =>
+                  startEditing("callToAction", content.callToAction)
+                }
+                className="text-blue-500 hover:text-blue-600"
+              >
+                <FaEdit />
+              </button>
+            )}
+          </div>
+          {editingField === "callToAction" ? (
+            <input
+              type="text"
+              value={tempContent}
+              onChange={(e) => setTempContent(e.target.value)}
+              className="w-full border rounded p-2"
+            />
+          ) : (
+            <p className="text-gray-700">{content.callToAction}</p>
+          )}
+        </div>
+
         {/* Benefits */}
         <div className="border rounded-lg p-4">
           <h3 className="font-semibold mb-4">Benefits</h3>
@@ -445,12 +500,26 @@ const HeroSectionManager: React.FC = () => {
               try {
                 console.log("Attempting to save content:", content);
 
+                // Normalize background image to relative URL if it is an absolute uploads URL
+                const normalized = { ...content };
+                if (
+                  normalized.backgroundImage.startsWith(
+                    "http://localhost:5000/uploads/"
+                  )
+                ) {
+                  normalized.backgroundImage =
+                    normalized.backgroundImage.replace(
+                      "http://localhost:5000",
+                      ""
+                    );
+                }
+
                 const response = await fetch("http://localhost:5000/api/hero", {
                   method: "POST",
                   headers: {
                     "Content-Type": "application/json",
                   },
-                  body: JSON.stringify(content),
+                  body: JSON.stringify(normalized),
                   credentials: "include",
                 });
 
@@ -482,6 +551,335 @@ const HeroSectionManager: React.FC = () => {
           >
             Save All Changes
           </button>
+        </div>
+
+        {/* Home Page Editor */}
+        <div className="mt-12 border rounded-lg p-4">
+          <h3 className="text-lg font-semibold mb-4">Home Page Content</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">
+                Trust Badges Subtitle
+              </label>
+              <input
+                type="text"
+                value={homeContent?.trustBadges?.subtitle || ""}
+                onChange={(e) =>
+                  setHomeContent((prev: any) => ({
+                    ...prev,
+                    trustBadges: {
+                      ...(prev?.trustBadges || {}),
+                      subtitle: e.target.value,
+                    },
+                  }))
+                }
+                className="w-full border rounded p-2"
+              />
+            </div>
+            {/* Trust brands editable list */}
+            <div className="md:col-span-2">
+              <label className="block text-sm text-gray-600 mb-2">
+                Trust Brands
+              </label>
+              <div className="space-y-3">
+                {(homeContent?.trustBadges?.brands || []).map(
+                  (b: any, idx: number) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder="Brand name"
+                        value={b.name || ""}
+                        onChange={(e) =>
+                          setHomeContent((prev: any) => {
+                            const brands = [
+                              ...(prev?.trustBadges?.brands || []),
+                            ];
+                            brands[idx] = {
+                              ...(brands[idx] || {}),
+                              name: e.target.value,
+                            };
+                            return {
+                              ...prev,
+                              trustBadges: {
+                                ...(prev?.trustBadges || {}),
+                                brands,
+                              },
+                            };
+                          })
+                        }
+                        className="w-48 border rounded p-2"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Logo URL or /uploads/..."
+                        value={b.logo || ""}
+                        onChange={(e) =>
+                          setHomeContent((prev: any) => {
+                            const brands = [
+                              ...(prev?.trustBadges?.brands || []),
+                            ];
+                            brands[idx] = {
+                              ...(brands[idx] || {}),
+                              logo: e.target.value,
+                            };
+                            return {
+                              ...prev,
+                              trustBadges: {
+                                ...(prev?.trustBadges || {}),
+                                brands,
+                              },
+                            };
+                          })
+                        }
+                        className="flex-1 border rounded p-2"
+                      />
+                      <button
+                        type="button"
+                        className="text-red-600"
+                        onClick={() =>
+                          setHomeContent((prev: any) => ({
+                            ...prev,
+                            trustBadges: {
+                              ...(prev?.trustBadges || {}),
+                              brands: (prev?.trustBadges?.brands || []).filter(
+                                (_: any, i: number) => i !== idx
+                              ),
+                            },
+                          }))
+                        }
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )
+                )}
+                <button
+                  type="button"
+                  className="text-blue-600"
+                  onClick={() =>
+                    setHomeContent((prev: any) => ({
+                      ...prev,
+                      trustBadges: {
+                        ...(prev?.trustBadges || {}),
+                        brands: [
+                          ...(prev?.trustBadges?.brands || []),
+                          { name: "", logo: "" },
+                        ],
+                      },
+                    }))
+                  }
+                >
+                  + Add Brand
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">
+                Experiences Title
+              </label>
+              <input
+                type="text"
+                value={homeContent?.experiences?.title || ""}
+                onChange={(e) =>
+                  setHomeContent((prev: any) => ({
+                    ...prev,
+                    experiences: {
+                      ...(prev?.experiences || {}),
+                      title: e.target.value,
+                    },
+                  }))
+                }
+                className="w-full border rounded p-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">
+                Social Proof Heading
+              </label>
+              <input
+                type="text"
+                value={homeContent?.socialProof?.heading || ""}
+                onChange={(e) =>
+                  setHomeContent((prev: any) => ({
+                    ...prev,
+                    socialProof: {
+                      ...(prev?.socialProof || {}),
+                      heading: e.target.value,
+                    },
+                  }))
+                }
+                className="w-full border rounded p-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">
+                Social Proof Subheading
+              </label>
+              <input
+                type="text"
+                value={homeContent?.socialProof?.subheading || ""}
+                onChange={(e) =>
+                  setHomeContent((prev: any) => ({
+                    ...prev,
+                    socialProof: {
+                      ...(prev?.socialProof || {}),
+                      subheading: e.target.value,
+                    },
+                  }))
+                }
+                className="w-full border rounded p-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">
+                Culinary Title
+              </label>
+              <input
+                type="text"
+                value={homeContent?.culinary?.title || ""}
+                onChange={(e) =>
+                  setHomeContent((prev: any) => ({
+                    ...prev,
+                    culinary: {
+                      ...(prev?.culinary || {}),
+                      title: e.target.value,
+                    },
+                  }))
+                }
+                className="w-full border rounded p-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">
+                Footer Email
+              </label>
+              <input
+                type="text"
+                value={homeContent?.footer?.email || ""}
+                onChange={(e) =>
+                  setHomeContent((prev: any) => ({
+                    ...prev,
+                    footer: { ...(prev?.footer || {}), email: e.target.value },
+                  }))
+                }
+                className="w-full border rounded p-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">
+                Footer Phone
+              </label>
+              <input
+                type="text"
+                value={homeContent?.footer?.phone || ""}
+                onChange={(e) =>
+                  setHomeContent((prev: any) => ({
+                    ...prev,
+                    footer: { ...(prev?.footer || {}), phone: e.target.value },
+                  }))
+                }
+                className="w-full border rounded p-2"
+              />
+            </div>
+            {/* Culinary images */}
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">
+                Culinary Section 1 Image URL
+              </label>
+              <input
+                type="text"
+                value={homeContent?.culinary?.section1Image || ""}
+                onChange={(e) =>
+                  setHomeContent((prev: any) => ({
+                    ...prev,
+                    culinary: {
+                      ...(prev?.culinary || {}),
+                      section1Image: e.target.value,
+                    },
+                  }))
+                }
+                className="w-full border rounded p-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">
+                Culinary Section 2 Image URL
+              </label>
+              <input
+                type="text"
+                value={homeContent?.culinary?.section2Image || ""}
+                onChange={(e) =>
+                  setHomeContent((prev: any) => ({
+                    ...prev,
+                    culinary: {
+                      ...(prev?.culinary || {}),
+                      section2Image: e.target.value,
+                    },
+                  }))
+                }
+                className="w-full border rounded p-2"
+              />
+            </div>
+            {/* Testimonials title already handled, add map titles */}
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">
+                Map Title
+              </label>
+              <input
+                type="text"
+                value={homeContent?.map?.title || ""}
+                onChange={(e) =>
+                  setHomeContent((prev: any) => ({
+                    ...prev,
+                    map: { ...(prev?.map || {}), title: e.target.value },
+                  }))
+                }
+                className="w-full border rounded p-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">
+                Map Subtitle
+              </label>
+              <input
+                type="text"
+                value={homeContent?.map?.subtitle || ""}
+                onChange={(e) =>
+                  setHomeContent((prev: any) => ({
+                    ...prev,
+                    map: { ...(prev?.map || {}), subtitle: e.target.value },
+                  }))
+                }
+                className="w-full border rounded p-2"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end mt-4">
+            <button
+              onClick={async () => {
+                try {
+                  const res = await fetch("http://localhost:5000/api/home", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(homeContent || {}),
+                  });
+                  if (res.ok) {
+                    const saved = await res.json();
+                    setHomeContent(saved);
+                    alert("Home page content saved!");
+                  } else {
+                    const err = await res.json();
+                    alert(err.message || "Failed to save home content");
+                  }
+                } catch (e) {
+                  alert("Failed to save home content");
+                }
+              }}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            >
+              Save Home Content
+            </button>
+          </div>
         </div>
       </div>
 

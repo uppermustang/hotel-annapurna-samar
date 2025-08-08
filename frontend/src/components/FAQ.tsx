@@ -1,7 +1,28 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 const FAQ: React.FC = () => {
   const [openFAQ, setOpenFAQ] = useState<number | null>(0);
+  const [title, setTitle] = useState<string | null>(null);
+  const [subtitle, setSubtitle] = useState<string | null>(null);
+  const [callCta, setCallCta] = useState<string | null>(null);
+  const [chatCta, setChatCta] = useState<string | null>(null);
+  const [emailCta, setEmailCta] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/home");
+        if (res.ok) {
+          const data = await res.json();
+          setTitle(data?.faq?.title || null);
+          setSubtitle(data?.faq?.subtitle || null);
+          setCallCta(data?.faq?.callCta || null);
+          setChatCta(data?.faq?.chatCta || null);
+          setEmailCta(data?.faq?.emailCta || null);
+        }
+      } catch {}
+    })();
+  }, []);
 
   const faqs = [
     {
@@ -55,11 +76,11 @@ const FAQ: React.FC = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold text-deep-blue mb-4">
-            Frequently Asked Questions
+            {title || "Frequently Asked Questions"}
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Got questions? We've got answers! Here are the most common questions
-            our guests ask.
+            {subtitle ||
+              "Got questions? We've got answers! Here are the most common questions our guests ask."}
           </p>
         </div>
 
@@ -126,13 +147,13 @@ const FAQ: React.FC = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button className="bg-vibrant-pink text-white font-bold py-3 px-6 rounded-lg hover:bg-warm-red transition-colors">
-                📞 Call: +977-123-456-789
+                {callCta || "📞 Call: +977-123-456-789"}
               </button>
               <button className="bg-forest-green text-white font-bold py-3 px-6 rounded-lg hover:bg-deep-blue transition-colors">
-                💬 Live Chat Support
+                {chatCta || "💬 Live Chat Support"}
               </button>
               <button className="bg-warm-red text-white font-bold py-3 px-6 rounded-lg hover:bg-vibrant-pink transition-colors">
-                📧 Email: info@hotelannapurna.com
+                {emailCta || "📧 Email: info@hotelannapurna.com"}
               </button>
             </div>
           </div>

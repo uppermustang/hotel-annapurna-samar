@@ -59,7 +59,8 @@ const HeroSection: React.FC = () => {
           </div>
           <div className="h-px w-24 bg-white opacity-30"></div>
           <p className="text-lg md:text-xl text-white opacity-80 max-w-lg text-center">
-            {content?.callToAction ||
+            {content?.mainDescription ||
+              content?.callToAction ||
               "Join us for an unforgettable stay in one of our carefully curated rooms"}
           </p>
         </div>

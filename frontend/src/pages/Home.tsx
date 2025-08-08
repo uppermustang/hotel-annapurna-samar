@@ -8,7 +8,7 @@ import SocialProof from "../components/SocialProof";
 import Culinary from "../components/Culinary";
 import Testimonials from "../components/Testimonials";
 import FAQ from "../components/FAQ";
-import FinalCTA from "../components/FinalCTA";
+import Map from "../components/Map";
 import Footer from "../components/Footer";
 
 const Home: React.FC = () => {
@@ -23,7 +23,7 @@ const Home: React.FC = () => {
         <Culinary />
         <Testimonials />
         <FAQ />
-        <FinalCTA />
+        <Map />
       </main>
       <Footer />
     </div>

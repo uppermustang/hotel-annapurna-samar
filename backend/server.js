@@ -8,6 +8,7 @@ const mediaRoutes = require("./routes/media");
 const bookingsRoutes = require("./routes/bookings");
 const reportsRoutes = require("./routes/reports");
 const heroContentRoutes = require("./routes/heroContent");
+const homeContentRoutes = require("./routes/homeContent");
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.use("/api/media", mediaRoutes);
 app.use("/api/bookings", bookingsRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/hero", heroContentRoutes);
+app.use("/api/home", homeContentRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
