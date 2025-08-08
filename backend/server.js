@@ -15,6 +15,13 @@ const app = express();
 connectDB();
 
 // Middleware
+// Ensure uploads directory exists (multer does not create it automatically)
+const fs = require("fs");
+const path = require("path");
+const uploadsDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 app.use(
   cors({
     origin: "http://localhost:3000",

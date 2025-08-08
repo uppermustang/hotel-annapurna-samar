@@ -36,7 +36,8 @@ router.post("/upload", upload.array("files", 10), async (req, res) => {
 
     const files = req.files.map((file) => ({
       filename: file.filename,
-      path: file.path,
+      // Normalize to a URL path that works on all OS and matches the static route
+      path: `/uploads/${file.filename}`,
       originalName: file.originalname,
       size: file.size,
       mimetype: file.mimetype,
@@ -69,9 +70,10 @@ router.delete("/:id", async (req, res) => {
       return res.status(404).json({ message: "Media not found" });
     }
 
-    // Delete file from filesystem
-    if (fs.existsSync(media.path)) {
-      fs.unlinkSync(media.path);
+    // Delete file from filesystem (convert URL path to local path)
+    const localPath = path.join(process.cwd(), media.path.replace(/^\//, ""));
+    if (fs.existsSync(localPath)) {
+      fs.unlinkSync(localPath);
     }
 
     await Media.findByIdAndDelete(req.params.id);

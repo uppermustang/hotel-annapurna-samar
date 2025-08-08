@@ -54,6 +54,15 @@ const HeroSectionManager: React.FC = () => {
   const [tempContent, setTempContent] = useState<string>("");
   const [selectedBenefit, setSelectedBenefit] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [libraryItems, setLibraryItems] = useState<
+    {
+      _id: string;
+      filename: string;
+      path: string;
+      originalName: string;
+    }[]
+  >([]);
 
   // Load saved content when component mounts
   useEffect(() => {
@@ -130,6 +139,19 @@ const HeroSectionManager: React.FC = () => {
       alert(
         "Error uploading image. Please check if the backend server is running and try again."
       );
+    }
+  };
+
+  const openLibrary = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/media");
+      if (res.ok) {
+        const data = await res.json();
+        setLibraryItems(data);
+        setLibraryOpen(true);
+      }
+    } catch (e) {
+      console.error("Failed to load media library", e);
     }
   };
 
@@ -213,6 +235,13 @@ const HeroSectionManager: React.FC = () => {
                 <span>Change Background Image</span>
               </div>
             </label>
+            <button
+              type="button"
+              onClick={openLibrary}
+              className="absolute bottom-3 right-3 bg-white/90 text-gray-800 px-3 py-1 rounded shadow hover:bg-white"
+            >
+              Choose from Library
+            </button>
           </div>
           {/* Debug info */}
           <div className="text-sm text-gray-500">
@@ -455,6 +484,54 @@ const HeroSectionManager: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {libraryOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center"
+          onClick={() => setLibraryOpen(false)}
+        >
+          <div
+            className="bg-white rounded-lg p-4 max-w-4xl w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="text-lg font-semibold">Select an image</h4>
+              <button
+                onClick={() => setLibraryOpen(false)}
+                className="text-gray-600 hover:text-gray-800"
+              >
+                ×
+              </button>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-h-[60vh] overflow-auto">
+              {libraryItems.map((item) => (
+                <button
+                  key={item._id}
+                  className="border rounded overflow-hidden hover:ring-2 hover:ring-blue-500"
+                  onClick={() => {
+                    const normalized = item.path.startsWith("/")
+                      ? item.path
+                      : "/" + item.path;
+                    const url = normalized.startsWith("/uploads")
+                      ? `http://localhost:5000${normalized}`
+                      : normalized;
+                    setContent((prev) => ({ ...prev, backgroundImage: url }));
+                    setLibraryOpen(false);
+                  }}
+                >
+                  <img
+                    src={`http://localhost:5000${
+                      item.path.startsWith("/") ? item.path : "/" + item.path
+                    }`}
+                    alt={item.originalName}
+                    className="w-full h-28 object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

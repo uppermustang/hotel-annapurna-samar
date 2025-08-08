@@ -89,7 +89,10 @@ const MediaLibrary: React.FC = () => {
   };
 
   const copyUrlToClipboard = (path: string) => {
-    const fullUrl = `http://localhost:5000${path}`;
+    const normalized = path.replace(/\\/g, "/");
+    const fullUrl = `http://localhost:5000${
+      normalized.startsWith("/") ? normalized : "/" + normalized
+    }`;
     navigator.clipboard.writeText(fullUrl);
     alert("URL copied to clipboard!");
   };
@@ -127,11 +130,17 @@ const MediaLibrary: React.FC = () => {
           >
             <div className="relative aspect-video">
               <img
-                src={`http://localhost:5000${item.path}`}
+                src={`http://localhost:5000${
+                  item.path.startsWith("/") ? item.path : "/" + item.path
+                }`}
                 alt={item.originalName}
                 className="w-full h-full object-cover cursor-pointer"
                 onClick={() =>
-                  setSelectedImage(`http://localhost:5000${item.path}`)
+                  setSelectedImage(
+                    `http://localhost:5000${
+                      item.path.startsWith("/") ? item.path : "/" + item.path
+                    }`
+                  )
                 }
               />
             </div>
