@@ -1,10 +1,35 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 
 type ExperienceItem = { title: string; description: string; image?: string };
+
+const MAX_PREVIEW_CHARS = 150;
 
 const Experiences: React.FC = () => {
   const [title, setTitle] = useState<string | null>(null);
   const [items, setItems] = useState<ExperienceItem[]>([]);
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalItem, setModalItem] = useState<ExperienceItem | null>(null);
+
+  const openModal = (item: ExperienceItem) => {
+    setModalItem(item);
+    setModalOpen(true);
+  };
+
+  const closeModal = useCallback(() => {
+    setModalOpen(false);
+    setModalItem(null);
+  }, []);
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeModal();
+    };
+    if (modalOpen) {
+      document.addEventListener("keydown", handleEsc);
+    }
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [modalOpen, closeModal]);
 
   useEffect(() => {
     (async () => {
@@ -65,6 +90,11 @@ const Experiences: React.FC = () => {
 
   const list: ExperienceItem[] = items.length > 0 ? items : fallbackItems;
 
+  const getPreview = (desc: string) => {
+    if (desc.length <= MAX_PREVIEW_CHARS) return desc;
+    return desc.slice(0, MAX_PREVIEW_CHARS) + "…";
+  };
+
   return (
     <section id="experiences" className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
@@ -100,13 +130,52 @@ const Experiences: React.FC = () => {
                   {it.title}
                 </h3>
                 <p className="text-gray-200 text-sm leading-snug">
-                  {it.description}
+                  {getPreview(it.description)}
+                  {it.description.length > MAX_PREVIEW_CHARS && (
+                    <button
+                      onClick={() => openModal(it)}
+                      className="ml-1 underline text-gray-100 hover:text-white"
+                    >
+                      Read more
+                    </button>
+                  )}
                 </p>
               </div>
             </div>
           ))}
         </div>
       </div>
+
+      {/* Modal */}
+      {modalOpen && modalItem && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+          onClick={closeModal}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b">
+              <h3 className="text-lg font-semibold text-deep-blue">
+                {modalItem.title}
+              </h3>
+              <button
+                aria-label="Close"
+                onClick={closeModal}
+                className="text-gray-500 hover:text-gray-700 text-xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-5 overflow-auto">
+              <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                {modalItem.description}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };
