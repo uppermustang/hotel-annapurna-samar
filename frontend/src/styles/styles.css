@@ -22,7 +22,62 @@ code {
     monospace;
 }
 
-/* Custom utility classes */
+/* Admin Dashboard Uniform Styles */
+.admin-form {
+  @apply max-w-6xl mx-auto;
+}
+
+.admin-section {
+  @apply bg-white border border-gray-200 rounded-xl p-5 shadow-sm;
+}
+
+.admin-section + .admin-section {
+  @apply mt-6;
+}
+
+.admin-section-title {
+  @apply text-lg font-semibold text-gray-800 mb-4;
+}
+
+.admin-label {
+  @apply block text-sm text-gray-600 mb-1;
+}
+
+/* Enforce light inputs inside admin */
+.admin-form input:not([type="file"]),
+.admin-form textarea,
+.admin-form select {
+  @apply bg-white text-gray-800 border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-vibrant-pink focus:border-transparent;
+}
+
+.admin-form input::placeholder,
+.admin-form textarea::placeholder {
+  @apply text-gray-400;
+}
+
+/* Button consistency */
+.admin-form .btn {
+  @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200;
+}
+
+.admin-form .btn-primary {
+  @apply bg-vibrant-pink hover:bg-warm-red text-white;
+}
+
+.admin-form .btn-secondary {
+  @apply bg-deep-blue hover:bg-forest-green text-white;
+}
+
+.admin-form .btn-danger {
+  @apply text-red-600 hover:text-red-700;
+}
+
+/* Space between grids/blocks */
+.admin-grid-gap {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-4;
+}
+
+/* Existing utilities */
 .gradient-bg {
   background: linear-gradient(135deg, #1a2a44 0%, #2e4a3a 100%);
 }
@@ -97,7 +152,8 @@ code {
 
 /* Map and Subscribe specific animations */
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px);
   }
   50% {
@@ -126,7 +182,8 @@ code {
 }
 
 @keyframes subscribeGlow {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 20px rgba(216, 27, 96, 0.3);
   }
   50% {
@@ -155,7 +212,12 @@ code {
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
@@ -189,18 +251,18 @@ code {
   left: 0;
   width: 0%;
   height: 3px;
-  background: linear-gradient(90deg, #D81B60, #2E4A3A);
+  background: linear-gradient(90deg, #d81b60, #2e4a3a);
   z-index: 1001;
   transition: width 0.1s ease;
 }
 
 /* Gradient backgrounds */
 .gradient-hero {
-  background: linear-gradient(135deg, #1A2A44 0%, #2E4A3A 50%, #A61C3C 100%);
+  background: linear-gradient(135deg, #1a2a44 0%, #2e4a3a 50%, #a61c3c 100%);
 }
 
 .gradient-cta {
-  background: linear-gradient(135deg, #D81B60 0%, #A61C3C 100%);
+  background: linear-gradient(135deg, #d81b60 0%, #a61c3c 100%);
 }
 
 /* Parallax effect */
@@ -221,7 +283,7 @@ code {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
 }
 
-/* Form styling */
+/* Form styling (global fallback) */
 select,
 input,
 textarea {
@@ -247,6 +309,13 @@ textarea::placeholder {
 
   select option {
     @apply bg-gray-800 text-white;
+  }
+
+  /* But force admin to stay light */
+  .admin-form input:not([type="file"]),
+  .admin-form textarea,
+  .admin-form select {
+    @apply bg-white text-gray-800 border-gray-300;
   }
 }
 
@@ -296,7 +365,7 @@ textarea:focus {
 /* Loading spinner */
 .spinner {
   border: 4px solid rgba(0, 0, 0, 0.1);
-  border-left-color: #D81B60;
+  border-left-color: #d81b60;
   border-radius: 50%;
   width: 40px;
   height: 40px;
