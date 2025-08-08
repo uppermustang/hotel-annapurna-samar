@@ -13,18 +13,20 @@ import Footer from "../components/Footer";
 
 const Home: React.FC = () => {
   return (
-    <>
+    <div className="min-h-screen bg-white">
       <Header />
-      <HeroSection />
-      <TrustBadges />
-      <Experiences />
-      <SocialProof />
-      <Culinary />
-      <Testimonials />
-      <FAQ />
-      <FinalCTA />
+      <main>
+        <HeroSection />
+        <TrustBadges />
+        <Experiences />
+        <SocialProof />
+        <Culinary />
+        <Testimonials />
+        <FAQ />
+        <FinalCTA />
+      </main>
       <Footer />
-    </>
+    </div>
   );
 };
 
