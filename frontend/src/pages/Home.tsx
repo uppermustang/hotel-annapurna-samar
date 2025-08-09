@@ -19,6 +19,21 @@ const Home: React.FC = () => {
       <main>
         <HeroSection />
         <TrustBadges />
+
+        {/* History anchor placeholder; content can be replaced later */}
+        <section id="history" className="py-16 bg-white">
+          <div className="container mx-auto px-4 text-center">
+            <h2 className="text-3xl font-bold text-deep-blue mb-4">
+              Our History
+            </h2>
+            <p className="text-gray-600 max-w-3xl mx-auto">
+              Explore the rich story of Hotel Annapurna Samar — the first and
+              oldest lodge in the village, shaped by the Himalayas and warm
+              local hospitality.
+            </p>
+          </div>
+        </section>
+
         <Experiences />
         <SocialProof />
         <Culinary />

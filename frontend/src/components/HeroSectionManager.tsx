@@ -127,6 +127,9 @@ const HeroSectionManager: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [homeContent, setHomeContent] = useState<any>(null);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [libraryTarget, setLibraryTarget] = useState<
+    "heroBackground" | "backgroundImage" | null
+  >(null);
   const [libraryItems, setLibraryItems] = useState<
     {
       _id: string;
@@ -248,12 +251,15 @@ const HeroSectionManager: React.FC = () => {
     }
   };
 
-  const openLibrary = async () => {
+  const openLibrary = async (
+    target: "heroBackground" | "backgroundImage" = "backgroundImage"
+  ) => {
     try {
       const res = await fetch("http://localhost:5000/api/media");
       if (res.ok) {
         const data = await res.json();
         setLibraryItems(data);
+        setLibraryTarget(target);
         setLibraryOpen(true);
       }
     } catch (e) {
@@ -302,9 +308,197 @@ const HeroSectionManager: React.FC = () => {
         </h2>
 
         {/* Background Image */}
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold mb-4">Background Image</h3>
-          <div className="space-y-2">
+        <div className="mb-8 admin-section">
+          <h3 className="text-lg font-semibold mb-4">Landing Background</h3>
+          {/* Type selector */}
+          <div className="admin-grid-gap mb-4">
+            <div>
+              <label className="admin-label">Background Type</label>
+              <select
+                value={homeContent?.heroBackground?.type || "image"}
+                onChange={(e) =>
+                  setHomeContent((prev: any) => ({
+                    ...prev,
+                    heroBackground: {
+                      ...(prev?.heroBackground || {}),
+                      type: e.target.value,
+                    },
+                  }))
+                }
+              >
+                <option value="image">Image</option>
+                <option value="video">Video</option>
+                <option value="youtube">YouTube</option>
+              </select>
+            </div>
+            <div className="flex items-end gap-6">
+              <label className="inline-flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={!!homeContent?.heroBackground?.loop}
+                  onChange={(e) =>
+                    setHomeContent((prev: any) => ({
+                      ...prev,
+                      heroBackground: {
+                        ...(prev?.heroBackground || {}),
+                        loop: e.target.checked,
+                      },
+                    }))
+                  }
+                />
+                <span className="text-sm text-gray-700">Loop video</span>
+              </label>
+              <label className="inline-flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={!!homeContent?.heroBackground?.muted}
+                  onChange={(e) =>
+                    setHomeContent((prev: any) => ({
+                      ...prev,
+                      heroBackground: {
+                        ...(prev?.heroBackground || {}),
+                        muted: e.target.checked,
+                      },
+                    }))
+                  }
+                />
+                <span className="text-sm text-gray-700">Mute sound</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Source input */}
+          <div className="mb-4">
+            <label className="admin-label">Source (URL or /uploads/...)</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={homeContent?.heroBackground?.src || ""}
+                onChange={(e) =>
+                  setHomeContent((prev: any) => ({
+                    ...prev,
+                    heroBackground: {
+                      ...(prev?.heroBackground || {}),
+                      src: e.target.value,
+                    },
+                  }))
+                }
+                className="flex-1"
+                placeholder="Paste image/video URL or YouTube link"
+              />
+              <input
+                type="file"
+                accept={
+                  homeContent?.heroBackground?.type === "image"
+                    ? "image/*"
+                    : "video/*"
+                }
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const formData = new FormData();
+                  formData.append("files", file);
+                  try {
+                    const resp = await fetch(
+                      "http://localhost:5000/api/media/upload",
+                      { method: "POST", body: formData }
+                    );
+                    const data = await resp.json();
+                    if (resp.ok && data && data[0]) {
+                      const url = `http://localhost:5000${data[0].path}`;
+                      setHomeContent((prev: any) => ({
+                        ...prev,
+                        heroBackground: {
+                          ...(prev?.heroBackground || {}),
+                          src: url,
+                        },
+                      }));
+                      alert("File uploaded successfully!");
+                    } else {
+                      alert("Failed to upload file");
+                    }
+                  } catch (err) {
+                    alert("Error uploading file");
+                  }
+                }}
+                className="hidden"
+                id="hero-bg-upload"
+              />
+              <label
+                htmlFor="hero-bg-upload"
+                className="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 cursor-pointer text-sm"
+              >
+                📁 Upload
+              </label>
+            </div>
+          </div>
+
+          {/* Poster for videos */}
+          {homeContent?.heroBackground?.type !== "image" && (
+            <div className="mb-4">
+              <label className="admin-label">Poster Image (optional)</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={homeContent?.heroBackground?.poster || ""}
+                  onChange={(e) =>
+                    setHomeContent((prev: any) => ({
+                      ...prev,
+                      heroBackground: {
+                        ...(prev?.heroBackground || {}),
+                        poster: e.target.value,
+                      },
+                    }))
+                  }
+                  className="flex-1"
+                  placeholder="/uploads/poster.jpg"
+                />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const formData = new FormData();
+                    formData.append("files", file);
+                    try {
+                      const resp = await fetch(
+                        "http://localhost:5000/api/media/upload",
+                        { method: "POST", body: formData }
+                      );
+                      const data = await resp.json();
+                      if (resp.ok && data && data[0]) {
+                        const url = `http://localhost:5000${data[0].path}`;
+                        setHomeContent((prev: any) => ({
+                          ...prev,
+                          heroBackground: {
+                            ...(prev?.heroBackground || {}),
+                            poster: url,
+                          },
+                        }));
+                        alert("Poster uploaded successfully!");
+                      } else {
+                        alert("Failed to upload poster");
+                      }
+                    } catch (err) {
+                      alert("Error uploading poster");
+                    }
+                  }}
+                  className="hidden"
+                  id="hero-poster-upload"
+                />
+                <label
+                  htmlFor="hero-poster-upload"
+                  className="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 cursor-pointer text-sm"
+                >
+                  📁 Upload Poster
+                </label>
+              </div>
+            </div>
+          )}
+
+          {/* Legacy preview (image) retained below */}
+          <div className="space-y-2 mt-4">
             <div className="relative h-48 bg-gray-100 rounded-lg overflow-hidden">
               {content.backgroundImage ? (
                 <img
@@ -344,13 +538,12 @@ const HeroSectionManager: React.FC = () => {
               </label>
               <button
                 type="button"
-                onClick={openLibrary}
+                onClick={() => openLibrary("backgroundImage")}
                 className="absolute bottom-3 right-3 bg-white/90 text-gray-800 px-3 py-1 rounded shadow hover:bg-white"
               >
                 Choose from Library
               </button>
             </div>
-            {/* Debug info */}
             <div className="text-sm text-gray-500">
               Current image path: {content.backgroundImage || "None"}
             </div>
@@ -794,6 +987,7 @@ const HeroSectionManager: React.FC = () => {
                 />
               </div>
 
+              {/* Rooms Editor moved to dedicated tab */}
               {/* Unique Experiences Items (6 boxes) */}
               <div className="md:col-span-2">
                 <h4 className="font-medium text-gray-700 mb-3">
@@ -2444,7 +2638,17 @@ const HeroSectionManager: React.FC = () => {
                     const url = normalized.startsWith("/uploads")
                       ? `http://localhost:5000${normalized}`
                       : normalized;
-                    setContent((prev) => ({ ...prev, backgroundImage: url }));
+                    if (libraryTarget === "heroBackground") {
+                      setHomeContent((prev: any) => ({
+                        ...(prev || {}),
+                        heroBackground: {
+                          ...(prev?.heroBackground || {}),
+                          src: url,
+                        },
+                      }));
+                    } else {
+                      setContent((prev) => ({ ...prev, backgroundImage: url }));
+                    }
                     setLibraryOpen(false);
                   }}
                 >

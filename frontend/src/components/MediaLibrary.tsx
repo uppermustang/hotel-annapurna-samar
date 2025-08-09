@@ -113,7 +113,7 @@ const MediaLibrary: React.FC = () => {
           <input
             type="file"
             multiple
-            accept="image/*"
+            accept="image/*,video/*"
             onChange={handleUpload}
             className="hidden"
           />
@@ -129,20 +129,39 @@ const MediaLibrary: React.FC = () => {
             className="border rounded-lg overflow-hidden bg-gray-50"
           >
             <div className="relative aspect-video">
-              <img
-                src={`http://localhost:5000${
-                  item.path.startsWith("/") ? item.path : "/" + item.path
-                }`}
-                alt={item.originalName}
-                className="w-full h-full object-cover cursor-pointer"
-                onClick={() =>
-                  setSelectedImage(
-                    `http://localhost:5000${
-                      item.path.startsWith("/") ? item.path : "/" + item.path
-                    }`
-                  )
-                }
-              />
+              {item.mimetype.startsWith("video/") ? (
+                <video
+                  className="w-full h-full object-cover cursor-pointer"
+                  src={`http://localhost:5000${
+                    item.path.startsWith("/") ? item.path : "/" + item.path
+                  }`}
+                  onClick={() =>
+                    setSelectedImage(
+                      `http://localhost:5000${
+                        item.path.startsWith("/") ? item.path : "/" + item.path
+                      }`
+                    )
+                  }
+                  muted
+                  playsInline
+                  loop
+                />
+              ) : (
+                <img
+                  src={`http://localhost:5000${
+                    item.path.startsWith("/") ? item.path : "/" + item.path
+                  }`}
+                  alt={item.originalName}
+                  className="w-full h-full object-cover cursor-pointer"
+                  onClick={() =>
+                    setSelectedImage(
+                      `http://localhost:5000${
+                        item.path.startsWith("/") ? item.path : "/" + item.path
+                      }`
+                    )
+                  }
+                />
+              )}
             </div>
             <div className="p-2">
               <p

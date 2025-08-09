@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import HeroSectionManager from "../components/HeroSectionManager";
+import RoomsManager from "../components/RoomsManager";
 import MediaLibrary from "../components/MediaLibrary";
 
 const Admin: React.FC = () => {
@@ -49,6 +50,7 @@ const Admin: React.FC = () => {
         {/* Tab Content */}
         <div className="mt-6">
           {activeTab === "hero" && <HeroSectionManager />}
+          {activeTab === "rooms" && <RoomsManager />}
           {activeTab === "media" && <MediaLibrary />}
           {/* Add other tab contents here */}
         </div>

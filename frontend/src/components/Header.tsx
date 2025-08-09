@@ -1,25 +1,35 @@
 import React, { useState, useEffect } from "react";
 import { FaBars, FaTimes } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import BookingModal from "./BookingModal";
 
 const Header: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
+    const computeScrolled = () =>
+      location.pathname !== "/" ? true : window.scrollY > 50;
+    const handleScroll = () => setIsScrolled(computeScrolled());
 
+    setIsScrolled(computeScrolled());
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [location.pathname]);
 
   const openBookingModal = () => {
     setIsBookingModalOpen(true);
     setIsMobileMenuOpen(false);
+  };
+
+  const handleHomeClick = (e: React.MouseEvent) => {
+    if (location.pathname === "/") {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      setIsMobileMenuOpen(false);
+    }
   };
 
   return (
@@ -37,6 +47,7 @@ const Header: React.FC = () => {
             <div className="text-xl md:text-2xl font-bold">
               <Link
                 to="/"
+                onClick={handleHomeClick}
                 className={`hover:text-vibrant-pink transition-colors ${
                   isScrolled ? "text-deep-blue" : "text-white"
                 }`}
@@ -49,6 +60,7 @@ const Header: React.FC = () => {
             <nav className="hidden md:flex items-center space-x-8">
               <Link
                 to="/"
+                onClick={handleHomeClick}
                 className={`font-medium hover:text-vibrant-pink transition-colors ${
                   isScrolled
                     ? "text-gray-700 hover:text-vibrant-pink"
@@ -56,6 +68,36 @@ const Header: React.FC = () => {
                 }`}
               >
                 Home
+              </Link>
+              <Link
+                to="/history"
+                className={`font-medium hover:text-vibrant-pink transition-colors ${
+                  isScrolled
+                    ? "text-gray-700 hover:text-vibrant-pink"
+                    : "text-white hover:text-yellow-300"
+                }`}
+              >
+                History
+              </Link>
+              <Link
+                to="/blog"
+                className={`font-medium hover:text-vibrant-pink transition-colors ${
+                  isScrolled
+                    ? "text-gray-700 hover:text-vibrant-pink"
+                    : "text-white hover:text-yellow-300"
+                }`}
+              >
+                Blog
+              </Link>
+              <Link
+                to="/rooms"
+                className={`font-medium hover:text-vibrant-pink transition-colors ${
+                  isScrolled
+                    ? "text-gray-700 hover:text-vibrant-pink"
+                    : "text-white hover:text-yellow-300"
+                }`}
+              >
+                Rooms
               </Link>
               <Link
                 to="/admin"
@@ -67,44 +109,6 @@ const Header: React.FC = () => {
               >
                 Admin
               </Link>
-              <a
-                href="#accommodations"
-                className={`font-medium hover:text-vibrant-pink transition-colors ${
-                  isScrolled
-                    ? "text-gray-700 hover:text-vibrant-pink"
-                    : "text-white hover:text-yellow-300"
-                }`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  const section =
-                    document.querySelector("#accommodations") ||
-                    document.querySelector('[data-section="accommodations"]');
-                  if (section) {
-                    section.scrollIntoView({ behavior: "smooth" });
-                  }
-                }}
-              >
-                Rooms
-              </a>
-              <a
-                href="#experiences"
-                className={`font-medium hover:text-vibrant-pink transition-colors ${
-                  isScrolled
-                    ? "text-gray-700 hover:text-vibrant-pink"
-                    : "text-white hover:text-yellow-300"
-                }`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  const section =
-                    document.querySelector("#experiences") ||
-                    document.querySelector('[data-section="experiences"]');
-                  if (section) {
-                    section.scrollIntoView({ behavior: "smooth" });
-                  }
-                }}
-              >
-                Experiences
-              </a>
             </nav>
 
             {/* Book Now Button - Desktop */}
@@ -147,12 +151,39 @@ const Header: React.FC = () => {
           <nav className="container mx-auto px-4 py-6 space-y-4">
             <Link
               to="/"
+              onClick={handleHomeClick}
+              className={`block text-lg font-medium hover:text-vibrant-pink transition-colors ${
+                isScrolled ? "text-gray-700" : "text-white"
+              }`}
+            >
+              Home
+            </Link>
+            <Link
+              to="/history"
               className={`block text-lg font-medium hover:text-vibrant-pink transition-colors ${
                 isScrolled ? "text-gray-700" : "text-white"
               }`}
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Home
+              History
+            </Link>
+            <Link
+              to="/blog"
+              className={`block text-lg font-medium hover:text-vibrant-pink transition-colors ${
+                isScrolled ? "text-gray-700" : "text-white"
+              }`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Blog
+            </Link>
+            <Link
+              to="/rooms"
+              className={`block text-lg font-medium hover:text-vibrant-pink transition-colors ${
+                isScrolled ? "text-gray-700" : "text-white"
+              }`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Rooms
             </Link>
             <Link
               to="/admin"
@@ -163,42 +194,6 @@ const Header: React.FC = () => {
             >
               Admin
             </Link>
-            <a
-              href="#accommodations"
-              className={`block text-lg font-medium hover:text-vibrant-pink transition-colors ${
-                isScrolled ? "text-gray-700" : "text-white"
-              }`}
-              onClick={(e) => {
-                e.preventDefault();
-                const section =
-                  document.querySelector("#accommodations") ||
-                  document.querySelector('[data-section="accommodations"]');
-                if (section) {
-                  section.scrollIntoView({ behavior: "smooth" });
-                }
-                setIsMobileMenuOpen(false);
-              }}
-            >
-              Rooms
-            </a>
-            <a
-              href="#experiences"
-              className={`block text-lg font-medium hover:text-vibrant-pink transition-colors ${
-                isScrolled ? "text-gray-700" : "text-white"
-              }`}
-              onClick={(e) => {
-                e.preventDefault();
-                const section =
-                  document.querySelector("#experiences") ||
-                  document.querySelector('[data-section="experiences"]');
-                if (section) {
-                  section.scrollIntoView({ behavior: "smooth" });
-                }
-                setIsMobileMenuOpen(false);
-              }}
-            >
-              Experiences
-            </a>
 
             {/* Mobile Book Now Button */}
             <button

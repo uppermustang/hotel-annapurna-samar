@@ -18,9 +18,9 @@ const bookingSchema = new mongoose.Schema({
   roomType: {
     type: String,
     required: [true, "Room type is required"],
-    enum: ["Standard", "Deluxe", "Suite", "Presidential"],
-    default: "Standard",
+    trim: true,
   },
+  guests: { type: Number, default: 2, min: 1 },
   status: {
     type: String,
     enum: ["pending", "confirmed", "active", "completed", "cancelled"],

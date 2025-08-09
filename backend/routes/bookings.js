@@ -16,14 +16,39 @@ router.get("/", async (req, res) => {
 // Create new booking
 router.post("/", async (req, res) => {
   try {
-    const { guestName, checkIn, checkOut, roomType } = req.body;
+    const {
+      guestName,
+      checkIn,
+      checkOut,
+      roomType,
+      guestEmail,
+      guestPhone,
+      guests,
+      specialRequests,
+    } = req.body;
 
     // Basic validation
-    if (!guestName || !checkIn || !checkOut || !roomType) {
+    if (
+      !guestName ||
+      !checkIn ||
+      !checkOut ||
+      !roomType ||
+      !guestEmail ||
+      !guestPhone
+    ) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const booking = new Booking({ guestName, checkIn, checkOut, roomType });
+    const booking = new Booking({
+      guestName,
+      checkIn,
+      checkOut,
+      roomType,
+      guestEmail,
+      guestPhone,
+      guests,
+      specialRequests,
+    });
     await booking.save();
     res.status(201).json(booking);
   } catch (error) {
