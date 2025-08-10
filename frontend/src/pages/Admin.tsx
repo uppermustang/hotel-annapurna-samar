@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import HeroSectionManager from "../components/HeroSectionManager";
 import RoomsManager from "../components/RoomsManager";
 import MediaLibrary from "../components/MediaLibrary";
+import ClientManagement from "../components/ClientManagement";
 
 const Admin: React.FC = () => {
   const [activeTab, setActiveTab] = useState("hero");
@@ -12,6 +13,7 @@ const Admin: React.FC = () => {
     { id: "experiences", label: "Experiences" },
     { id: "testimonials", label: "Testimonials" },
     { id: "media", label: "Media Gallery" },
+    { id: "client-management", label: "Client Management" },
   ];
 
   return (
@@ -52,6 +54,7 @@ const Admin: React.FC = () => {
           {activeTab === "hero" && <HeroSectionManager />}
           {activeTab === "rooms" && <RoomsManager />}
           {activeTab === "media" && <MediaLibrary />}
+          {activeTab === "client-management" && <ClientManagement />}
           {/* Add other tab contents here */}
         </div>
       </main>

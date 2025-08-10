@@ -120,7 +120,7 @@ const Header: React.FC = () => {
                   : "bg-white text-vibrant-pink hover:bg-yellow-300 hover:text-gray-800 focus:ring-white border-2 border-white shadow-xl"
               }`}
             >
-              📞 Book Now
+              Book Now
             </button>
 
             {/* Mobile Menu Button */}
@@ -200,7 +200,7 @@ const Header: React.FC = () => {
               onClick={openBookingModal}
               className="w-full bg-vibrant-pink text-white font-bold py-4 px-6 rounded-lg hover:bg-warm-red transition-colors focus:outline-none focus:ring-4 focus:ring-vibrant-pink focus:ring-opacity-50 mt-4"
             >
-              📞 Book Now - Save 25%
+              Book Now - Save 25%
             </button>
           </nav>
         </div>

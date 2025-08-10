@@ -4,6 +4,10 @@ const RoomsManager: React.FC = () => {
   const [homeContent, setHomeContent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [pickerIndex, setPickerIndex] = useState<number | null>(null);
+  const [mediaItems, setMediaItems] = useState<any[]>([]);
+  const [mediaLoading, setMediaLoading] = useState(false);
 
   const DEFAULT_ITEMS = [
     {
@@ -55,21 +59,60 @@ const RoomsManager: React.FC = () => {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("/api/home");
+        // Test if backend is reachable
+        console.log("Testing backend connection...");
+        const res = await fetch("http://localhost:5000/api/home");
+        console.log("Home content response status:", res.status);
         if (res.ok) {
           const data = await res.json();
+          console.log("Home content loaded:", data);
           setWithDefaults(data);
         } else {
+          console.log("Home content response not ok:", res.status);
           setWithDefaults({});
         }
       } catch (e) {
         console.error("Failed to load home content", e);
+        console.error(
+          "Error details:",
+          e instanceof Error ? e.message : String(e)
+        );
         setWithDefaults({});
       } finally {
         setLoading(false);
       }
     })();
   }, []);
+
+  const openMediaPicker = async (roomIdx: number) => {
+    setPickerIndex(roomIdx);
+    setIsPickerOpen(true);
+    setMediaLoading(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/media");
+      if (res.ok) {
+        const items = await res.json();
+        console.log("Media items loaded:", items);
+        setMediaItems(Array.isArray(items) ? items : []);
+      } else {
+        console.log("Media response not ok:", res.status);
+        setMediaItems([]);
+      }
+    } catch (e) {
+      console.error("Failed to load media library", e);
+      setMediaItems([]);
+    } finally {
+      setMediaLoading(false);
+    }
+  };
+
+  const normalizePath = (path: string) => {
+    if (!path) return "";
+    const normalized = path.replace(/\\/g, "/");
+    return `http://localhost:5000${
+      normalized.startsWith("/") ? normalized : `/${normalized}`
+    }`;
+  };
 
   if (loading) {
     return <div className="p-6">Loading…</div>;
@@ -78,20 +121,25 @@ const RoomsManager: React.FC = () => {
   const saveRooms = async () => {
     setSaving(true);
     try {
-      const res = await fetch("/api/home", {
+      console.log("Saving rooms content:", homeContent);
+      const res = await fetch("http://localhost:5000/api/home", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(homeContent || {}),
       });
+      console.log("Save response status:", res.status);
       if (res.ok) {
         const saved = await res.json();
+        console.log("Rooms content saved:", saved);
         setWithDefaults(saved);
         alert("Rooms content saved!");
       } else {
         const err = await res.json();
+        console.error("Save failed:", err);
         alert(err.message || "Failed to save rooms content");
       }
-    } catch {
+    } catch (e) {
+      console.error("Save error:", e);
       alert("Failed to save rooms content");
     } finally {
       setSaving(false);
@@ -234,7 +282,7 @@ const RoomsManager: React.FC = () => {
             {/* Images */}
             <div className="mt-2">
               <label className="block text-sm text-gray-600 mb-1">
-                Main Image URL
+                Main Image
               </label>
               <div className="flex items-center gap-2">
                 <input
@@ -254,51 +302,13 @@ const RoomsManager: React.FC = () => {
                   }
                   className="flex-1 border rounded p-2"
                 />
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  id={`rooms-image-upload-${idx}`}
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    const formData = new FormData();
-                    formData.append("files", file);
-                    try {
-                      const resp = await fetch("/api/media/upload", {
-                        method: "POST",
-                        body: formData,
-                      });
-                      const data = await resp.json();
-                      if (resp.ok && data && data[0]) {
-                        const url = data[0].path?.startsWith("/")
-                          ? data[0].path
-                          : `/${data[0].path}`;
-                        setHomeContent((prev: any) => {
-                          const items = [...(prev?.rooms?.items || [])];
-                          const imgs = [...(items[idx]?.images || [])];
-                          imgs[0] = url;
-                          items[idx] = { ...(items[idx] || {}), images: imgs };
-                          return {
-                            ...prev,
-                            rooms: { ...(prev?.rooms || {}), items },
-                          };
-                        });
-                        alert("Image uploaded successfully!");
-                      } else {
-                        alert("Failed to upload image");
-                      }
-                    } catch {
-                      alert("Error uploading image");
-                    }
-                  }}
-                />
-                <label
-                  htmlFor={`rooms-image-upload-${idx}`}
+                <button
+                  type="button"
+                  onClick={() => openMediaPicker(idx)}
                   className="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 cursor-pointer text-sm"
                 >
-                  📁 Upload
-                </label>
+                  📚 Choose from Media
+                </button>
               </div>
             </div>
 
@@ -351,6 +361,84 @@ const RoomsManager: React.FC = () => {
           + Add Room
         </button>
       </div>
+
+      {/* Media Picker Modal */}
+      {isPickerOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
+          onClick={() => setIsPickerOpen(false)}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[80vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold">Select Image from Media</h3>
+              <button
+                className="text-gray-600"
+                onClick={() => setIsPickerOpen(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4 overflow-auto">
+              {mediaLoading ? (
+                <div className="py-10 text-center text-gray-500">
+                  Loading media…
+                </div>
+              ) : mediaItems.length === 0 ? (
+                <div className="py-10 text-center text-gray-500">
+                  No media found. Upload images in Media Gallery tab.
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {mediaItems
+                    .filter(
+                      (m) =>
+                        typeof m.mimetype === "string" &&
+                        m.mimetype.startsWith("image/")
+                    )
+                    .map((m) => {
+                      const src = normalizePath(m.path);
+                      return (
+                        <button
+                          key={m._id || src}
+                          type="button"
+                          className="border rounded overflow-hidden hover:ring-2 hover:ring-vibrant-pink"
+                          onClick={() => {
+                            if (pickerIndex == null) return;
+                            setHomeContent((prev: any) => {
+                              const items = [...(prev?.rooms?.items || [])];
+                              const imgs = [
+                                ...(items[pickerIndex]?.images || []),
+                              ];
+                              imgs[0] = m.path; // Store the relative path, not the full URL
+                              items[pickerIndex] = {
+                                ...(items[pickerIndex] || {}),
+                                images: imgs,
+                              };
+                              return {
+                                ...prev,
+                                rooms: { ...(prev?.rooms || {}), items },
+                              };
+                            });
+                            setIsPickerOpen(false);
+                          }}
+                        >
+                          <img
+                            src={src}
+                            alt={m.originalName || ""}
+                            className="w-full h-28 object-cover"
+                          />
+                        </button>
+                      );
+                    })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex justify-end mt-6">
         <button
