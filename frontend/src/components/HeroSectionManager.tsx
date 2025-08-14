@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { FaImage, FaEdit, FaSave, FaTimes } from "react-icons/fa";
+import {
+  FaImage,
+  FaEdit,
+  FaSave,
+  FaTimes,
+  FaPlus,
+  FaTrash,
+  FaEye,
+  FaEyeSlash,
+} from "react-icons/fa";
 
 interface HeroContent {
   title: string;
@@ -14,6 +23,27 @@ interface HeroContent {
     title: string;
     description: string;
   }[];
+}
+
+interface SiteConfig {
+  branding: {
+    logo: string;
+    textLogo: string;
+    favicon: string;
+    showLogo: boolean;
+    showTextLogo: boolean;
+    logoMaxHeight?: number;
+    logoMaxWidth?: number;
+  };
+  navigation: {
+    items: Array<{
+      id: string;
+      text: string;
+      url: string;
+      order: number;
+      isActive: boolean;
+    }>;
+  };
 }
 
 // Defaults for Subscribe editor so fields are populated even if DB document lacks the section
@@ -128,7 +158,7 @@ const HeroSectionManager: React.FC = () => {
   const [homeContent, setHomeContent] = useState<any>(null);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [libraryTarget, setLibraryTarget] = useState<
-    "heroBackground" | "backgroundImage" | null
+    "heroBackground" | "backgroundImage" | "poster" | null
   >(null);
   const [libraryItems, setLibraryItems] = useState<
     {
@@ -136,8 +166,43 @@ const HeroSectionManager: React.FC = () => {
       filename: string;
       path: string;
       originalName: string;
+      mimetype?: string;
     }[]
   >([]);
+
+  // Site Configuration State
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>({
+    branding: {
+      logo: "/himalayas-bg.jpg",
+      textLogo: "🏔️ Hotel Annapurna Samar",
+      favicon: "/favicon.ico",
+      showLogo: true,
+      showTextLogo: true,
+      logoMaxHeight: 40,
+      logoMaxWidth: 100,
+    },
+    navigation: {
+      items: [
+        { id: "home", text: "Home", url: "/", order: 1, isActive: true },
+        {
+          id: "history",
+          text: "History",
+          url: "/history",
+          order: 2,
+          isActive: true,
+        },
+        { id: "blog", text: "Blog", url: "/blog", order: 3, isActive: true },
+        { id: "rooms", text: "Rooms", url: "/rooms", order: 4, isActive: true },
+        { id: "admin", text: "Admin", url: "/admin", order: 5, isActive: true },
+      ],
+    },
+  });
+  const [editingNavItem, setEditingNavItem] = useState<string | null>(null);
+  const [tempNavItem, setTempNavItem] = useState<{
+    text: string;
+    url: string;
+    order: number;
+  }>({ text: "", url: "", order: 1 });
 
   // Load saved content when component mounts
   useEffect(() => {
@@ -160,6 +225,24 @@ const HeroSectionManager: React.FC = () => {
     };
 
     loadSavedContent();
+
+    // Load site configuration
+    (async () => {
+      try {
+        const configResponse = await fetch(
+          "http://localhost:5000/api/site-config"
+        );
+        if (configResponse.ok) {
+          const configData = await configResponse.json();
+          if (configData && Object.keys(configData).length > 0) {
+            setSiteConfig(configData);
+          }
+        }
+      } catch (error) {
+        console.log("Using default site configuration");
+      }
+    })();
+
     // Load home content
     (async () => {
       try {
@@ -252,7 +335,7 @@ const HeroSectionManager: React.FC = () => {
   };
 
   const openLibrary = async (
-    target: "heroBackground" | "backgroundImage" = "backgroundImage"
+    target: "heroBackground" | "backgroundImage" | "poster" = "backgroundImage"
   ) => {
     try {
       const res = await fetch("http://localhost:5000/api/media");
@@ -292,6 +375,115 @@ const HeroSectionManager: React.FC = () => {
     }));
   };
 
+  // Navigation Management Functions
+  const startEditingNavItem = (itemId: string) => {
+    const item = siteConfig.navigation.items.find((nav) => nav.id === itemId);
+    if (item) {
+      setEditingNavItem(itemId);
+      setTempNavItem({
+        text: item.text,
+        url: item.url,
+        order: item.order,
+      });
+    }
+  };
+
+  const saveNavItemEdit = () => {
+    if (!editingNavItem) return;
+
+    setSiteConfig((prev) => ({
+      ...prev,
+      navigation: {
+        ...prev.navigation,
+        items: prev.navigation.items.map((item) =>
+          item.id === editingNavItem ? { ...item, ...tempNavItem } : item
+        ),
+      },
+    }));
+    setEditingNavItem(null);
+    setTempNavItem({ text: "", url: "", order: 1 });
+  };
+
+  const toggleNavItemVisibility = (itemId: string) => {
+    setSiteConfig((prev) => ({
+      ...prev,
+      navigation: {
+        ...prev.navigation,
+        items: prev.navigation.items.map((item) =>
+          item.id === itemId ? { ...item, isActive: !item.isActive } : item
+        ),
+      },
+    }));
+  };
+
+  const addNavItem = () => {
+    const newId = `nav-${Date.now()}`;
+    const newItem = {
+      id: newId,
+      text: "New Menu Item",
+      url: "/new-page",
+      order: siteConfig.navigation.items.length + 1,
+      isActive: true,
+    };
+
+    setSiteConfig((prev) => ({
+      ...prev,
+      navigation: {
+        ...prev.navigation,
+        items: [...prev.navigation.items, newItem],
+      },
+    }));
+  };
+
+  const removeNavItem = (itemId: string) => {
+    if (itemId === "home") {
+      alert("Cannot remove Home menu item");
+      return;
+    }
+
+    const isConfirmed = window.confirm(
+      "Are you sure you want to remove this menu item?"
+    );
+    if (!isConfirmed) return;
+
+    setSiteConfig((prev) => ({
+      ...prev,
+      navigation: {
+        ...prev.navigation,
+        items: prev.navigation.items.filter((item) => item.id !== itemId),
+      },
+    }));
+  };
+
+  const reorderNavItem = (itemId: string, direction: "up" | "down") => {
+    const currentIndex = siteConfig.navigation.items.findIndex(
+      (item) => item.id === itemId
+    );
+    if (currentIndex === -1) return;
+
+    const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    if (newIndex < 0 || newIndex >= siteConfig.navigation.items.length) return;
+
+    const newItems = [...siteConfig.navigation.items];
+    [newItems[currentIndex], newItems[newIndex]] = [
+      newItems[newIndex],
+      newItems[currentIndex],
+    ];
+
+    // Update order numbers
+    newItems.forEach((item, index) => {
+      item.order = index + 1;
+    });
+
+    setSiteConfig((prev) => ({
+      ...prev,
+      navigation: {
+        ...prev.navigation,
+        items: newItems,
+      },
+    }));
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -306,6 +498,529 @@ const HeroSectionManager: React.FC = () => {
         <h2 className="text-2xl font-bold mb-6 text-deep-blue">
           Hero Section Manager
         </h2>
+
+        {/* Site Branding & Navigation Management */}
+        <div className="mb-8 admin-section">
+          <h3 className="text-lg font-semibold mb-4 text-deep-blue">
+            Site Branding & Navigation
+          </h3>
+          <p className="text-sm text-gray-600 mb-4">
+            💡 <strong>Logo Display Options:</strong> You can choose to show
+            only the image logo, only the text logo, or both together. Use the
+            checkboxes below each section to control what appears in the header.
+          </p>
+
+          {/* Branding Section */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            {/* Logo */}
+            <div>
+              <label className="admin-label">Logo Image</label>
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={siteConfig.branding.logo}
+                  onChange={(e) =>
+                    setSiteConfig((prev) => ({
+                      ...prev,
+                      branding: { ...prev.branding, logo: e.target.value },
+                    }))
+                  }
+                  className="w-full"
+                  placeholder="/uploads/logo.png"
+                />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const formData = new FormData();
+                    formData.append("files", file);
+                    try {
+                      const resp = await fetch(
+                        "http://localhost:5000/api/media/upload",
+                        { method: "POST", body: formData }
+                      );
+                      const data = await resp.json();
+                      if (resp.ok && data && data[0]) {
+                        // Use the path directly as it should already be a full URL or relative path
+                        const url = data[0].path;
+                        console.log("Logo upload response:", data[0]);
+                        console.log("Setting logo URL:", url);
+                        setSiteConfig((prev) => ({
+                          ...prev,
+                          branding: {
+                            ...prev.branding,
+                            logo: url,
+                            showLogo: true, // Automatically enable logo display when uploaded
+                          },
+                        }));
+                        alert(
+                          "Logo uploaded successfully! Logo display has been automatically enabled."
+                        );
+                      } else {
+                        alert("Failed to upload logo");
+                      }
+                    } catch (err) {
+                      alert("Error uploading logo");
+                    }
+                  }}
+                  className="hidden"
+                  id="logo-upload"
+                />
+                <label
+                  htmlFor="logo-upload"
+                  className="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 cursor-pointer text-sm block text-center"
+                >
+                  📁 Upload Logo
+                </label>
+
+                {/* Logo Display Controls */}
+                <div className="space-y-2 mt-2">
+                  <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={siteConfig.branding.showLogo}
+                        onChange={(e) =>
+                          setSiteConfig((prev) => ({
+                            ...prev,
+                            branding: {
+                              ...prev.branding,
+                              showLogo: e.target.checked,
+                            },
+                          }))
+                        }
+                        className="rounded"
+                      />
+                      Show Logo Image
+                    </label>
+                    {siteConfig.branding.logo && (
+                      <span
+                        className={`text-xs px-2 py-1 rounded ${
+                          siteConfig.branding.showLogo
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        {siteConfig.branding.showLogo
+                          ? "✅ Visible"
+                          : "❌ Hidden"}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Logo Size Controls */}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <label className="block text-gray-600 mb-1">
+                        Max Height (px)
+                      </label>
+                      <input
+                        type="number"
+                        value={siteConfig.branding.logoMaxHeight || 40}
+                        onChange={(e) =>
+                          setSiteConfig((prev) => ({
+                            ...prev,
+                            branding: {
+                              ...prev.branding,
+                              logoMaxHeight: parseInt(e.target.value) || 40,
+                            },
+                          }))
+                        }
+                        className="w-full border rounded px-2 py-1"
+                        min="20"
+                        max="80"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-gray-600 mb-1">
+                        Max Width (px)
+                      </label>
+                      <input
+                        type="number"
+                        value={siteConfig.branding.logoMaxWidth || 100}
+                        onChange={(e) =>
+                          setSiteConfig((prev) => ({
+                            ...prev,
+                            branding: {
+                              ...prev.branding,
+                              logoMaxWidth: parseInt(e.target.value) || 100,
+                            },
+                          }))
+                        }
+                        className="w-full border rounded px-2 py-1"
+                        min="40"
+                        max="200"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {siteConfig.branding.logo && (
+                  <div className="mt-2">
+                    <img
+                      src={
+                        siteConfig.branding.logo.startsWith("http")
+                          ? siteConfig.branding.logo
+                          : `http://localhost:5000${siteConfig.branding.logo}`
+                      }
+                      alt="Logo Preview"
+                      className="h-16 w-auto object-contain border rounded"
+                      onError={(e) => {
+                        console.error(
+                          "Logo preview failed to load:",
+                          siteConfig.branding.logo
+                        );
+                        e.currentTarget.style.display = "none";
+                      }}
+                      onLoad={() => {
+                        console.log(
+                          "Logo preview loaded successfully:",
+                          siteConfig.branding.logo
+                        );
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Text Logo */}
+            <div>
+              <label className="admin-label">Text Logo</label>
+              <input
+                type="text"
+                value={siteConfig.branding.textLogo}
+                onChange={(e) =>
+                  setSiteConfig((prev) => ({
+                    ...prev,
+                    branding: { ...prev.branding, textLogo: e.target.value },
+                  }))
+                }
+                className="w-full"
+                placeholder="🏔️ Hotel Annapurna Samar"
+              />
+
+              {/* Text Logo Display Control */}
+              <div className="flex items-center gap-2 mt-2">
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={siteConfig.branding.showTextLogo}
+                    onChange={(e) =>
+                      setSiteConfig((prev) => ({
+                        ...prev,
+                        branding: {
+                          ...prev.branding,
+                          showTextLogo: e.target.checked,
+                        },
+                      }))
+                    }
+                    className="rounded"
+                  />
+                  Show Text Logo
+                </label>
+                <span
+                  className={`text-xs px-2 py-1 rounded ${
+                    siteConfig.branding.showTextLogo
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                  }`}
+                >
+                  {siteConfig.branding.showTextLogo
+                    ? "✅ Visible"
+                    : "❌ Hidden"}
+                </span>
+              </div>
+
+              <div className="mt-2 text-sm text-gray-600">
+                Preview:{" "}
+                <span className="font-semibold">
+                  {siteConfig.branding.textLogo}
+                </span>
+              </div>
+            </div>
+
+            {/* Favicon */}
+            <div>
+              <label className="admin-label">Favicon</label>
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={siteConfig.branding.favicon}
+                  onChange={(e) =>
+                    setSiteConfig((prev) => ({
+                      ...prev,
+                      branding: { ...prev.branding, favicon: e.target.value },
+                    }))
+                  }
+                  className="w-full"
+                  placeholder="/uploads/favicon.ico"
+                />
+                <input
+                  type="file"
+                  accept="image/*,.ico"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const formData = new FormData();
+                    formData.append("files", file);
+                    try {
+                      const resp = await fetch(
+                        "http://localhost:5000/api/media/upload",
+                        { method: "POST", body: formData }
+                      );
+                      const data = await resp.json();
+                      if (resp.ok && data && data[0]) {
+                        const url = `http://localhost:5000${data[0].path}`;
+                        setSiteConfig((prev) => ({
+                          ...prev,
+                          branding: { ...prev.branding, favicon: url },
+                        }));
+                        alert("Favicon uploaded successfully!");
+                      } else {
+                        alert("Failed to upload favicon");
+                      }
+                    } catch (err) {
+                      alert("Error uploading favicon");
+                    }
+                  }}
+                  className="hidden"
+                  id="favicon-upload"
+                />
+                <label
+                  htmlFor="favicon-upload"
+                  className="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 cursor-pointer text-sm block text-center"
+                >
+                  📁 Upload Favicon
+                </label>
+                {siteConfig.branding.favicon && (
+                  <div className="mt-2">
+                    <img
+                      src={
+                        siteConfig.branding.favicon.startsWith("http")
+                          ? siteConfig.branding.favicon
+                          : `http://localhost:5000${siteConfig.branding.favicon}`
+                      }
+                      alt="Favicon Preview"
+                      className="h-8 w-8 object-contain border rounded"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation Management */}
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="font-semibold text-gray-800">Navigation Menu</h4>
+              <button
+                onClick={addNavItem}
+                className="bg-green-500 text-white px-3 py-2 rounded hover:bg-green-600 text-sm flex items-center gap-2"
+              >
+                <FaPlus size={12} />
+                Add Menu Item
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {siteConfig.navigation.items
+                .sort((a, b) => a.order - b.order)
+                .map((item) => (
+                  <div
+                    key={item.id}
+                    className="border rounded-lg p-4 bg-gray-50"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4 flex-1">
+                        {/* Order Controls */}
+                        <div className="flex flex-col gap-1">
+                          <button
+                            onClick={() => reorderNavItem(item.id, "up")}
+                            disabled={item.order === 1}
+                            className="text-gray-500 hover:text-blue-600 disabled:text-gray-300 disabled:cursor-not-allowed"
+                          >
+                            ↑
+                          </button>
+                          <span className="text-xs text-center font-mono bg-white px-2 py-1 rounded border">
+                            {item.order}
+                          </span>
+                          <button
+                            onClick={() => reorderNavItem(item.id, "down")}
+                            disabled={
+                              item.order === siteConfig.navigation.items.length
+                            }
+                            className="text-gray-500 hover:text-blue-600 disabled:text-gray-300 disabled:cursor-not-allowed"
+                          >
+                            ↓
+                          </button>
+                        </div>
+
+                        {/* Visibility Toggle */}
+                        <button
+                          onClick={() => toggleNavItemVisibility(item.id)}
+                          className={`p-2 rounded ${
+                            item.isActive
+                              ? "bg-green-100 text-green-700 hover:bg-green-200"
+                              : "bg-red-100 text-red-700 hover:bg-red-200"
+                          }`}
+                          title={
+                            item.isActive ? "Hide menu item" : "Show menu item"
+                          }
+                        >
+                          {item.isActive ? (
+                            <FaEye size={14} />
+                          ) : (
+                            <FaEyeSlash size={14} />
+                          )}
+                        </button>
+
+                        {/* Menu Item Content */}
+                        <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
+                          {editingNavItem === item.id ? (
+                            <>
+                              <input
+                                type="text"
+                                value={tempNavItem.text}
+                                onChange={(e) =>
+                                  setTempNavItem((prev) => ({
+                                    ...prev,
+                                    text: e.target.value,
+                                  }))
+                                }
+                                className="border rounded px-2 py-1 text-sm"
+                                placeholder="Menu text"
+                              />
+                              <input
+                                type="text"
+                                value={tempNavItem.url}
+                                onChange={(e) =>
+                                  setTempNavItem((prev) => ({
+                                    ...prev,
+                                    url: e.target.value,
+                                  }))
+                                }
+                                className="border rounded px-2 py-1 text-sm"
+                                placeholder="/page-url"
+                              />
+                              <input
+                                type="number"
+                                value={tempNavItem.order}
+                                onChange={(e) =>
+                                  setTempNavItem((prev) => ({
+                                    ...prev,
+                                    order: parseInt(e.target.value) || 1,
+                                  }))
+                                }
+                                className="border rounded px-2 py-1 text-sm w-20"
+                                min="1"
+                              />
+                            </>
+                          ) : (
+                            <>
+                              <span className="font-medium text-gray-800">
+                                {item.text}
+                              </span>
+                              <span className="text-gray-600 text-sm">
+                                {item.url}
+                              </span>
+                              <span className="text-gray-500 text-sm">
+                                Order: {item.order}
+                              </span>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-2">
+                          {editingNavItem === item.id ? (
+                            <>
+                              <button
+                                onClick={saveNavItemEdit}
+                                className="text-green-600 hover:text-green-700 p-1"
+                                title="Save changes"
+                              >
+                                <FaSave size={14} />
+                              </button>
+                              <button
+                                onClick={() => setEditingNavItem(null)}
+                                className="text-red-600 hover:text-red-700 p-1"
+                                title="Cancel editing"
+                              >
+                                <FaTimes size={14} />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => startEditingNavItem(item.id)}
+                                className="text-blue-600 hover:text-blue-700 p-1"
+                                title="Edit menu item"
+                              >
+                                <FaEdit size={14} />
+                              </button>
+                              {item.id !== "home" && (
+                                <button
+                                  onClick={() => removeNavItem(item.id)}
+                                  className="text-red-600 hover:text-red-700 p-1"
+                                  title="Remove menu item"
+                                >
+                                  <FaTrash size={14} />
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+
+          {/* Save Site Config Button */}
+          <div className="mt-6 flex justify-end">
+            <button
+              onClick={async () => {
+                try {
+                  console.log("Saving site config:", siteConfig);
+                  const response = await fetch(
+                    "http://localhost:5000/api/site-config",
+                    {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(siteConfig),
+                    }
+                  );
+
+                  if (response.ok) {
+                    const result = await response.json();
+                    console.log("Save successful:", result);
+                    alert("Site configuration saved successfully!");
+
+                    // Force a page reload to ensure the header updates
+                    window.location.reload();
+                  } else {
+                    const errorData = await response.json();
+                    console.error("Save failed:", errorData);
+                    alert(`Failed to save: ${errorData.message}`);
+                  }
+                } catch (error) {
+                  console.error("Error saving site config:", error);
+                  alert("Error saving site configuration");
+                }
+              }}
+              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-semibold"
+            >
+              Save Site Configuration
+            </button>
+          </div>
+        </div>
 
         {/* Background Image */}
         <div className="mb-8 admin-section">
@@ -374,63 +1089,133 @@ const HeroSectionManager: React.FC = () => {
               <input
                 type="text"
                 value={homeContent?.heroBackground?.src || ""}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const value = e.target.value;
+
+                  // Auto-detect YouTube URLs and set type accordingly
+                  const isYouTube =
+                    value.includes("youtube.com") || value.includes("youtu.be");
+
+                  // Validate and clean YouTube URLs
+                  let cleanValue = value;
+                  if (isYouTube) {
+                    // Convert youtu.be to youtube.com/embed format
+                    if (value.includes("youtu.be/")) {
+                      const videoId = value
+                        .split("youtu.be/")[1]
+                        ?.split("?")[0];
+                      if (videoId) {
+                        cleanValue = `https://www.youtube.com/watch?v=${videoId}`;
+                      }
+                    }
+                    // Ensure proper YouTube format
+                    if (value.includes("youtube.com/watch?v=")) {
+                      const videoId = value.split("v=")[1]?.split("&")[0];
+                      if (videoId) {
+                        cleanValue = `https://www.youtube.com/watch?v=${videoId}`;
+                      }
+                    }
+                  }
+                  const isVideo = value.match(
+                    /\.(mp4|mov|avi|webm|mkv|m4v|3gp|flv|wmv)$/
+                  );
+                  const isImage = value.match(
+                    /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/
+                  );
+
+                  let detectedType =
+                    homeContent?.heroBackground?.type || "image";
+
+                  if (isYouTube) {
+                    detectedType = "youtube";
+                  } else if (isVideo) {
+                    detectedType = "video";
+                  } else if (isImage) {
+                    detectedType = "image";
+                  }
+
+                  console.log(
+                    "Auto-detected type:",
+                    detectedType,
+                    "for URL:",
+                    value
+                  );
+
                   setHomeContent((prev: any) => ({
                     ...prev,
                     heroBackground: {
                       ...(prev?.heroBackground || {}),
-                      src: e.target.value,
+                      src: cleanValue,
+                      type: detectedType,
                     },
-                  }))
-                }
+                  }));
+
+                  // Auto-save YouTube settings immediately
+                  if (detectedType === "youtube") {
+                    setTimeout(async () => {
+                      try {
+                        const updatedContent = {
+                          ...homeContent,
+                          heroBackground: {
+                            ...(homeContent?.heroBackground || {}),
+                            src: cleanValue,
+                            type: detectedType,
+                          },
+                        };
+
+                        const res = await fetch(
+                          "http://localhost:5000/api/home",
+                          {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(updatedContent),
+                          }
+                        );
+
+                        if (res.ok) {
+                          const saved = await res.json();
+                          setHomeContent(saved);
+                          console.log(
+                            "YouTube settings auto-saved successfully"
+                          );
+                          alert("YouTube video settings saved automatically!");
+                        } else {
+                          console.error("Failed to auto-save YouTube settings");
+                        }
+                      } catch (e) {
+                        console.error("Error auto-saving YouTube settings:", e);
+                      }
+                    }, 100);
+                  }
+                }}
                 className="flex-1"
                 placeholder="Paste image/video URL or YouTube link"
               />
-              <input
-                type="file"
-                accept={
-                  homeContent?.heroBackground?.type === "image"
-                    ? "image/*"
-                    : "video/*"
-                }
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  const formData = new FormData();
-                  formData.append("files", file);
-                  try {
-                    const resp = await fetch(
-                      "http://localhost:5000/api/media/upload",
-                      { method: "POST", body: formData }
-                    );
-                    const data = await resp.json();
-                    if (resp.ok && data && data[0]) {
-                      const url = `http://localhost:5000${data[0].path}`;
-                      setHomeContent((prev: any) => ({
-                        ...prev,
-                        heroBackground: {
-                          ...(prev?.heroBackground || {}),
-                          src: url,
-                        },
-                      }));
-                      alert("File uploaded successfully!");
-                    } else {
-                      alert("Failed to upload file");
-                    }
-                  } catch (err) {
-                    alert("Error uploading file");
-                  }
-                }}
-                className="hidden"
-                id="hero-bg-upload"
-              />
-              <label
-                htmlFor="hero-bg-upload"
+              <button
+                type="button"
+                onClick={() => openLibrary("heroBackground")}
                 className="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 cursor-pointer text-sm"
               >
-                📁 Upload
-              </label>
+                📁 Select from Gallery
+              </button>
             </div>
+
+            {/* YouTube detection status */}
+            {homeContent?.heroBackground?.type === "youtube" && (
+              <div className="mt-2 text-sm text-green-600 bg-green-50 p-2 rounded">
+                ✅ YouTube video detected and saved automatically
+              </div>
+            )}
+
+            {/* Type indicator */}
+            {homeContent?.heroBackground?.type && (
+              <div className="mt-1 text-xs text-gray-500">
+                Current type:{" "}
+                <span className="font-medium">
+                  {homeContent.heroBackground.type}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Poster for videos */}
@@ -453,46 +1238,13 @@ const HeroSectionManager: React.FC = () => {
                   className="flex-1"
                   placeholder="/uploads/poster.jpg"
                 />
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    const formData = new FormData();
-                    formData.append("files", file);
-                    try {
-                      const resp = await fetch(
-                        "http://localhost:5000/api/media/upload",
-                        { method: "POST", body: formData }
-                      );
-                      const data = await resp.json();
-                      if (resp.ok && data && data[0]) {
-                        const url = `http://localhost:5000${data[0].path}`;
-                        setHomeContent((prev: any) => ({
-                          ...prev,
-                          heroBackground: {
-                            ...(prev?.heroBackground || {}),
-                            poster: url,
-                          },
-                        }));
-                        alert("Poster uploaded successfully!");
-                      } else {
-                        alert("Failed to upload poster");
-                      }
-                    } catch (err) {
-                      alert("Error uploading poster");
-                    }
-                  }}
-                  className="hidden"
-                  id="hero-poster-upload"
-                />
-                <label
-                  htmlFor="hero-poster-upload"
+                <button
+                  type="button"
+                  onClick={() => openLibrary("poster")}
                   className="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 cursor-pointer text-sm"
                 >
-                  📁 Upload Poster
-                </label>
+                  📁 Select from Gallery
+                </button>
               </div>
             </div>
           )}
@@ -2618,7 +3370,7 @@ const HeroSectionManager: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-4">
-              <h4 className="text-lg font-semibold">Select an image</h4>
+              <h4 className="text-lg font-semibold">Select Media</h4>
               <button
                 onClick={() => setLibraryOpen(false)}
                 className="text-gray-600 hover:text-gray-800"
@@ -2626,6 +3378,72 @@ const HeroSectionManager: React.FC = () => {
                 ×
               </button>
             </div>
+
+            {/* Upload Section */}
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+              <h5 className="font-medium text-gray-700 mb-3">
+                Upload New Media
+              </h5>
+              <div className="flex items-center space-x-4">
+                <input
+                  type="file"
+                  id="media-upload"
+                  multiple
+                  accept="image/*,video/*"
+                  onChange={async (e) => {
+                    const files = e.target.files;
+                    if (!files || files.length === 0) return;
+
+                    const formData = new FormData();
+                    Array.from(files).forEach((file) => {
+                      formData.append("files", file);
+                    });
+
+                    try {
+                      const resp = await fetch(
+                        "http://localhost:5000/api/media/upload",
+                        { method: "POST", body: formData }
+                      );
+                      const data = await resp.json();
+
+                      if (resp.ok && data && data.length > 0) {
+                        alert(
+                          "Media uploaded successfully! Refreshing library..."
+                        );
+                        // Refresh the media library
+                        const res = await fetch(
+                          "http://localhost:5000/api/media"
+                        );
+                        if (res.ok) {
+                          const newData = await res.json();
+                          setLibraryItems(newData);
+                        }
+                        // Clear the file input
+                        e.target.value = "";
+                      } else {
+                        alert("Failed to upload media");
+                      }
+                    } catch (error) {
+                      console.error("Error uploading media:", error);
+                      alert("Error uploading media. Please try again.");
+                    }
+                  }}
+                  className="flex-1"
+                />
+                <label
+                  htmlFor="media-upload"
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 cursor-pointer text-sm whitespace-nowrap"
+                >
+                  📁 Upload Media
+                </label>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Supported formats: Images (JPEG, PNG, GIF) and Videos (MP4, MOV,
+                AVI, WebM)
+              </p>
+            </div>
+
+            {/* Existing Media Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-h-[60vh] overflow-auto">
               {libraryItems.map((item) => (
                 <button
@@ -2635,18 +3453,107 @@ const HeroSectionManager: React.FC = () => {
                     const normalized = item.path.startsWith("/")
                       ? item.path
                       : "/" + item.path;
-                    const url = normalized.startsWith("/uploads")
-                      ? `http://localhost:5000${normalized}`
-                      : normalized;
+
+                    // For hero background, store the relative path, not the full URL
                     if (libraryTarget === "heroBackground") {
+                      console.log(
+                        "HeroSectionManager - Setting hero background src:",
+                        normalized
+                      );
+                      console.log(
+                        "HeroSectionManager - Item mimetype:",
+                        item.mimetype
+                      );
+                      console.log("HeroSectionManager - Item path:", item.path);
+
+                      // Auto-detect type based on file extension (since mimetype might not be available)
+                      const isVideo = item.originalName
+                        .toLowerCase()
+                        .match(/\.(mp4|mov|avi|webm|mkv|m4v|3gp|flv|wmv)$/);
+
+                      console.log(
+                        "HeroSectionManager - Detected video:",
+                        isVideo
+                      );
+                      console.log(
+                        "HeroSectionManager - Setting type to:",
+                        isVideo ? "video" : "image"
+                      );
+
+                      // Only change type if it's not already set to "youtube"
+                      const newType = isVideo ? "video" : "image";
+                      const shouldChangeType =
+                        homeContent?.heroBackground?.type !== "youtube";
+
                       setHomeContent((prev: any) => ({
                         ...(prev || {}),
                         heroBackground: {
                           ...(prev?.heroBackground || {}),
-                          src: url,
+                          src: normalized, // Store relative path like /uploads/video.mp4
+                          type: shouldChangeType
+                            ? newType
+                            : prev?.heroBackground?.type || newType, // Preserve youtube type
+                        },
+                      }));
+
+                      // Auto-save the changes immediately
+                      setTimeout(async () => {
+                        try {
+                          const res = await fetch(
+                            "http://localhost:5000/api/home",
+                            {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                ...homeContent,
+                                heroBackground: {
+                                  ...(homeContent?.heroBackground || {}),
+                                  src: normalized,
+                                  type: shouldChangeType
+                                    ? newType
+                                    : homeContent?.heroBackground?.type ||
+                                      newType,
+                                },
+                              }),
+                            }
+                          );
+                          if (res.ok) {
+                            const saved = await res.json();
+                            setHomeContent(saved);
+                            console.log(
+                              "Hero background auto-saved successfully"
+                            );
+                            alert(
+                              `Hero background updated to ${
+                                isVideo ? "video" : "image"
+                              }!`
+                            );
+                          } else {
+                            console.error(
+                              "Failed to auto-save hero background"
+                            );
+                          }
+                        } catch (e) {
+                          console.error(
+                            "Error auto-saving hero background:",
+                            e
+                          );
+                        }
+                      }, 100);
+                    } else if (libraryTarget === "poster") {
+                      // For poster images
+                      setHomeContent((prev: any) => ({
+                        ...(prev || {}),
+                        heroBackground: {
+                          ...(prev?.heroBackground || {}),
+                          poster: normalized,
                         },
                       }));
                     } else {
+                      // For other content, use the full URL for display
+                      const url = normalized.startsWith("/uploads")
+                        ? `http://localhost:5000${normalized}`
+                        : normalized;
                       setContent((prev) => ({ ...prev, backgroundImage: url }));
                     }
                     setLibraryOpen(false);

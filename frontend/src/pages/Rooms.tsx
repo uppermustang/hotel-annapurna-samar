@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useClientManagement } from "../hooks/useClientManagement";
+import { useBooking } from "../contexts/BookingContext";
 import { Guest } from "../types/client";
 import { FaCrown, FaHeart, FaUser, FaStar } from "react-icons/fa";
 
@@ -46,9 +47,9 @@ const DEFAULT_ROOMS: RoomCard[] = [
 ];
 
 const Rooms: React.FC = () => {
-  const [checkIn, setCheckIn] = useState("");
-  const [checkOut, setCheckOut] = useState("");
-  const [guests, setGuests] = useState(1);
+  const { bookingData, updateBookingData } = useBooking();
+  const { checkIn, checkOut, guests, selectedRoom } = bookingData;
+  
   const [filter, setFilter] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -220,6 +221,43 @@ const Rooms: React.FC = () => {
             </p>
           </div>
         </section>
+
+        {/* Booking Continuation Banner */}
+        {checkIn && checkOut && (
+          <section className="bg-green-50 border-b border-green-200 py-6">
+            <div className="container mx-auto px-4">
+              <div className="bg-white rounded-lg shadow-sm border border-green-200 p-6 max-w-4xl mx-auto">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                      <span className="text-green-600 text-xl">✓</span>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-green-800">Continue Your Booking</h3>
+                      <p className="text-green-600 text-sm">
+                        We've saved your preferences from the booking modal. Your dates and guest count are pre-filled below.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-6 text-center">
+                    <div>
+                      <div className="text-xs text-green-600 uppercase tracking-wide mb-1">Check-in</div>
+                      <div className="font-semibold text-green-800">{new Date(checkIn).toLocaleDateString()}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-green-600 uppercase tracking-wide mb-1">Check-out</div>
+                      <div className="font-semibold text-green-800">{new Date(checkOut).toLocaleDateString()}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-green-600 uppercase tracking-wide mb-1">Guests</div>
+                      <div className="font-semibold text-green-800">{guests}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Guest Information Panel */}
         {clientGuests.length > 0 && (
@@ -434,7 +472,7 @@ const Rooms: React.FC = () => {
                   type="date"
                   className="bg-transparent outline-none text-sm text-gray-900"
                   value={checkIn}
-                  onChange={(e) => setCheckIn(e.target.value)}
+                  onChange={(e) => updateBookingData({ checkIn: e.target.value })}
                   min={new Date().toISOString().split("T")[0]}
                 />
               </div>
@@ -444,7 +482,7 @@ const Rooms: React.FC = () => {
                   type="date"
                   className="bg-transparent outline-none text-sm text-gray-900"
                   value={checkOut}
-                  onChange={(e) => setCheckOut(e.target.value)}
+                  onChange={(e) => updateBookingData({ checkOut: e.target.value })}
                   min={checkIn || new Date().toISOString().split("T")[0]}
                 />
               </div>
@@ -456,7 +494,7 @@ const Rooms: React.FC = () => {
                   max={8}
                   value={guests}
                   onChange={(e) =>
-                    setGuests(parseInt(e.target.value || "1", 10))
+                    updateBookingData({ guests: e.target.value })
                   }
                   className="w-12 bg-transparent outline-none text-sm text-gray-900"
                 />
@@ -494,7 +532,7 @@ const Rooms: React.FC = () => {
                   <input
                     type="date"
                     value={checkIn}
-                    onChange={(e) => setCheckIn(e.target.value)}
+                    onChange={(e) => updateBookingData({ checkIn: e.target.value })}
                     min={new Date().toISOString().split("T")[0]}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-deep-blue focus:border-transparent"
                   />
@@ -506,7 +544,7 @@ const Rooms: React.FC = () => {
                   <input
                     type="date"
                     value={checkOut}
-                    onChange={(e) => setCheckOut(e.target.value)}
+                    onChange={(e) => updateBookingData({ checkOut: e.target.value })}
                     min={checkIn || new Date().toISOString().split("T")[0]}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-deep-blue focus:border-transparent"
                   />
@@ -521,7 +559,7 @@ const Rooms: React.FC = () => {
                     max={8}
                     value={guests}
                     onChange={(e) =>
-                      setGuests(parseInt(e.target.value || "1", 10))
+                      updateBookingData({ guests: e.target.value })
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-deep-blue focus:border-transparent"
                   />

@@ -35,6 +35,8 @@ export interface Booking {
   guestEmail: string;
   guestPhone: string;
   specialRequests: string;
+  roomId?: string; // Room identifier from the booking system
+  arrivalTime?: string; // Expected arrival time
   createdAt: string;
   updatedAt: string;
 }

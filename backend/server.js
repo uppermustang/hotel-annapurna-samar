@@ -9,6 +9,7 @@ const bookingsRoutes = require("./routes/bookings");
 const reportsRoutes = require("./routes/reports");
 const heroContentRoutes = require("./routes/heroContent");
 const homeContentRoutes = require("./routes/homeContent");
+const siteConfigRoutes = require("./routes/siteConfig");
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.use("/api/bookings", bookingsRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/hero", heroContentRoutes);
 app.use("/api/home", homeContentRoutes);
+app.use("/api/site-config", siteConfigRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

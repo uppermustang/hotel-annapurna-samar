@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Dialog } from "@headlessui/react";
 import { FaTimes, FaCalendarAlt, FaUsers, FaArrowRight } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { useBooking } from "../contexts/BookingContext";
+import { bookingIntegrationService } from "../services/BookingIntegrationService";
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -21,11 +23,11 @@ interface RoomOption {
 }
 
 const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose }) => {
-  const [step, setStep] = useState<"dates" | "rooms" | "confirmation">("dates");
-  const [checkIn, setCheckIn] = useState("");
-  const [checkOut, setCheckOut] = useState("");
-  const [guests, setGuests] = useState("2");
-  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
+  const { bookingData, updateBookingData, goToStep, resetBookingData } =
+    useBooking();
+  const { step, checkIn, checkOut, guests, selectedRoom, guestInfo } =
+    bookingData;
+
   const [backgroundImages, setBackgroundImages] = useState<string[]>([
     "/himalayas-bg.jpg",
     "/himalayas-bg.jpg",
@@ -118,29 +120,84 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose }) => {
   const canProceedToRooms =
     checkIn && checkOut && new Date(checkOut) > new Date(checkIn);
 
+  const canCompleteBooking =
+    selectedRoom && guestInfo.fullName && guestInfo.email && guestInfo.phone;
+
+  // Debug validation
+  console.log("Validation debug:", {
+    selectedRoom,
+    fullName: guestInfo.fullName,
+    email: guestInfo.email,
+    phone: guestInfo.phone,
+    canComplete: canCompleteBooking,
+  });
+
   const handleProceedToRooms = () => {
     if (canProceedToRooms) {
-      setStep("rooms");
+      goToStep("rooms");
     }
   };
 
   const handleRoomSelection = (roomId: string) => {
-    setSelectedRoom(roomId);
-    setStep("confirmation");
+    // Update the context with the selected room
+    updateBookingData({ selectedRoom: roomId });
+
+    // Move to confirmation step after a small delay to ensure state update
+    setTimeout(() => {
+      goToStep("confirmation");
+    }, 0);
   };
 
-  const handleCompleteBooking = () => {
-    console.log("Booking:", { selectedRoom, checkIn, checkOut, guests });
-    onClose();
-    navigate("/rooms");
+  const handleCompleteBooking = async () => {
+    try {
+      // Process the booking through the integration service
+      const result = await bookingIntegrationService.processNewBooking({
+        checkIn,
+        checkOut,
+        guests,
+        selectedRoom: selectedRoom!,
+        guestInfo,
+      });
+
+      if (result.success) {
+        // Show success message
+        alert(
+          `Booking confirmed! ${guestInfo.fullName} has been added to our guest list.`
+        );
+
+        // Save final booking data to localStorage for Rooms page
+        const finalBookingData = {
+          selectedRoom,
+          checkIn,
+          checkOut,
+          guests,
+          guestInfo,
+        };
+        localStorage.setItem(
+          "finalBookingData",
+          JSON.stringify(finalBookingData)
+        );
+
+        // Close modal and navigate to rooms
+        onClose();
+        navigate("/rooms");
+
+        // Reset booking data
+        resetBookingData();
+      } else {
+        console.error("Failed to process booking:", result.error);
+        alert(`Booking failed: ${result.error}. Please try again.`);
+      }
+    } catch (error) {
+      console.error("Error completing booking:", error);
+      alert(
+        "An error occurred while processing your booking. Please try again."
+      );
+    }
   };
 
   const resetModal = () => {
-    setStep("dates");
-    setCheckIn("");
-    setCheckOut("");
-    setGuests("2");
-    setSelectedRoom(null);
+    resetBookingData();
   };
 
   const handleClose = () => {
@@ -158,6 +215,60 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose }) => {
         <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
 
         <div className="relative bg-white w-full max-w-6xl rounded-2xl shadow-2xl overflow-hidden">
+          {/* Step Indicators */}
+          <div className="bg-gray-50 px-8 py-4 border-b">
+            <div className="flex items-center justify-center space-x-8">
+              <div
+                className={`flex items-center space-x-2 ${
+                  step === "dates" ? "text-blue-600" : "text-gray-400"
+                }`}
+              >
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                    step === "dates"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-500"
+                  }`}
+                >
+                  1
+                </div>
+                <span className="font-medium">Dates & Guests</span>
+              </div>
+              <div
+                className={`flex items-center space-x-2 ${
+                  step === "rooms" ? "text-blue-600" : "text-gray-400"
+                }`}
+              >
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                    step === "rooms"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-500"
+                  }`}
+                >
+                  2
+                </div>
+                <span className="font-medium">Room Selection</span>
+              </div>
+              <div
+                className={`flex items-center space-x-2 ${
+                  step === "confirmation" ? "text-blue-600" : "text-gray-400"
+                }`}
+              >
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                    step === "confirmation"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-500"
+                  }`}
+                >
+                  3
+                </div>
+                <span className="font-medium">Guest Info & Confirm</span>
+              </div>
+            </div>
+          </div>
+
           {/* Close Button */}
           <button
             onClick={handleClose}
@@ -220,7 +331,9 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose }) => {
                         <input
                           type="date"
                           value={checkIn}
-                          onChange={(e) => setCheckIn(e.target.value)}
+                          onChange={(e) =>
+                            updateBookingData({ checkIn: e.target.value })
+                          }
                           min={new Date().toISOString().split("T")[0]}
                           className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all text-center text-lg"
                         />
@@ -239,7 +352,9 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose }) => {
                         <input
                           type="date"
                           value={checkOut}
-                          onChange={(e) => setCheckOut(e.target.value)}
+                          onChange={(e) =>
+                            updateBookingData({ checkOut: e.target.value })
+                          }
                           min={
                             checkIn || new Date().toISOString().split("T")[0]
                           }
@@ -259,7 +374,9 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose }) => {
                         </h3>
                         <select
                           value={guests}
-                          onChange={(e) => setGuests(e.target.value)}
+                          onChange={(e) =>
+                            updateBookingData({ guests: e.target.value })
+                          }
                           className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-purple-100 focus:border-purple-500 transition-all text-center text-lg"
                         >
                           <option value="1">1 Guest</option>
@@ -388,11 +505,6 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose }) => {
                               ))}
                             </div>
                           </div>
-
-                          {/* Select Button */}
-                          <button className="w-full bg-gradient-to-r from-deep-blue to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 transform hover:scale-105">
-                            Select This Room
-                          </button>
                         </div>
                       </div>
                     ))}
@@ -403,7 +515,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose }) => {
           )}
 
           {/* Step 3: Confirmation */}
-          {step === "confirmation" && selectedRoom && (
+          {step === "confirmation" && (
             <div className="relative">
               {/* Header */}
               <div className="bg-gradient-to-r from-green-600 to-green-700 text-white py-16 px-8">
@@ -432,28 +544,46 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose }) => {
                         <h4 className="font-semibold text-gray-700 mb-4 text-lg">
                           Selected Room
                         </h4>
-                        <div className="space-y-3">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Room Type:</span>
-                            <span className="font-medium">
-                              {rooms.find((r) => r.id === selectedRoom)?.name}
-                            </span>
+                        {selectedRoom ? (
+                          <div className="space-y-3">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Room Type:</span>
+                              <span className="font-medium">
+                                {rooms.find((r) => r.id === selectedRoom)?.name}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">
+                                Price per Night:
+                              </span>
+                              <span className="font-medium">
+                                $
+                                {
+                                  rooms.find((r) => r.id === selectedRoom)
+                                    ?.price
+                                }
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Size:</span>
+                              <span className="font-medium">
+                                {rooms.find((r) => r.id === selectedRoom)?.size}
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">
-                              Price per Night:
-                            </span>
-                            <span className="font-medium">
-                              ${rooms.find((r) => r.id === selectedRoom)?.price}
-                            </span>
+                        ) : (
+                          <div className="text-center py-4">
+                            <div className="text-red-500 mb-2">
+                              ⚠️ No room selected
+                            </div>
+                            <button
+                              onClick={() => goToStep("rooms")}
+                              className="text-blue-600 hover:text-blue-800 text-sm underline"
+                            >
+                              Go back to select a room
+                            </button>
                           </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Size:</span>
-                            <span className="font-medium">
-                              {rooms.find((r) => r.id === selectedRoom)?.size}
-                            </span>
-                          </div>
-                        </div>
+                        )}
                       </div>
 
                       {/* Stay Details */}
@@ -483,19 +613,189 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose }) => {
                     </div>
                   </div>
 
+                  {/* Guest Information Form */}
+                  <div className="bg-white rounded-2xl p-8 mb-8 border-2 border-gray-100">
+                    <h3 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+                      Guest Information
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Primary Guest */}
+                      <div>
+                        <h4 className="font-semibold text-gray-700 mb-4 text-lg">
+                          Primary Guest
+                        </h4>
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Full Name <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={guestInfo.fullName}
+                              onChange={(e) =>
+                                updateBookingData({
+                                  guestInfo: {
+                                    ...guestInfo,
+                                    fullName: e.target.value,
+                                  },
+                                })
+                              }
+                              placeholder="Enter your full name"
+                              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Email Address{" "}
+                              <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="email"
+                              value={guestInfo.email}
+                              onChange={(e) =>
+                                updateBookingData({
+                                  guestInfo: {
+                                    ...guestInfo,
+                                    email: e.target.value,
+                                  },
+                                })
+                              }
+                              placeholder="Enter your email address"
+                              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Phone Number{" "}
+                              <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="tel"
+                              value={guestInfo.phone}
+                              onChange={(e) =>
+                                updateBookingData({
+                                  guestInfo: {
+                                    ...guestInfo,
+                                    phone: e.target.value,
+                                  },
+                                })
+                              }
+                              placeholder="Enter your phone number"
+                              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Additional Information */}
+                      <div>
+                        <h4 className="font-semibold text-gray-700 mb-4 text-lg">
+                          Additional Information
+                        </h4>
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Special Requests
+                            </label>
+                            <textarea
+                              value={guestInfo.specialRequests}
+                              onChange={(e) =>
+                                updateBookingData({
+                                  guestInfo: {
+                                    ...guestInfo,
+                                    specialRequests: e.target.value,
+                                  },
+                                })
+                              }
+                              placeholder="Any special requests or preferences?"
+                              rows={3}
+                              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all resize-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Arrival Time
+                            </label>
+                            <select
+                              value={guestInfo.arrivalTime}
+                              onChange={(e) =>
+                                updateBookingData({
+                                  guestInfo: {
+                                    ...guestInfo,
+                                    arrivalTime: e.target.value,
+                                  },
+                                })
+                              }
+                              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all"
+                            >
+                              <option value="">Select arrival time</option>
+                              <option value="morning">
+                                Morning (8 AM - 12 PM)
+                              </option>
+                              <option value="afternoon">
+                                Afternoon (12 PM - 4 PM)
+                              </option>
+                              <option value="evening">
+                                Evening (4 PM - 8 PM)
+                              </option>
+                              <option value="late">
+                                Late Evening (8 PM - 12 AM)
+                              </option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Validation Status */}
+                  {!canCompleteBooking && (
+                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <h4 className="text-red-800 font-semibold mb-2">
+                        Required Fields Missing:
+                      </h4>
+                      <ul className="text-red-700 text-sm space-y-1">
+                        {!selectedRoom && <li>• Room selection is required</li>}
+                        {!guestInfo.fullName && (
+                          <li>• Full name is required</li>
+                        )}
+                        {!guestInfo.email && (
+                          <li>• Email address is required</li>
+                        )}
+                        {!guestInfo.phone && (
+                          <li>• Phone number is required</li>
+                        )}
+                      </ul>
+                    </div>
+                  )}
+
                   {/* Action Buttons */}
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <button
-                      onClick={() => setStep("rooms")}
+                      onClick={() => goToStep("dates")}
+                      className="px-8 py-4 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-gray-400 transition-colors"
+                    >
+                      ← Back to Dates
+                    </button>
+                    <button
+                      onClick={() => goToStep("rooms")}
                       className="px-8 py-4 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-gray-400 transition-colors"
                     >
                       Choose Different Room
                     </button>
                     <button
                       onClick={handleCompleteBooking}
-                      className="px-8 py-4 bg-gradient-to-r from-vibrant-pink to-warm-red text-white font-bold rounded-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+                      disabled={!canCompleteBooking}
+                      className={`px-8 py-4 font-bold rounded-xl transition-all duration-300 ${
+                        canCompleteBooking
+                          ? "bg-gradient-to-r from-vibrant-pink to-warm-red text-white hover:shadow-2xl transform hover:scale-105"
+                          : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      }`}
                     >
-                      Confirm & Complete Booking
+                      {canCompleteBooking
+                        ? "Confirm & Complete Booking"
+                        : "Please fill all required fields"}
                     </button>
                   </div>
                 </div>

@@ -1,0 +1,49 @@
+{
+  "branding": {
+    "logo": "/uploads/1755052278200-logo.png",
+    "textLogo": "🏔️Samar Annapurna Hotel",
+    "favicon": "http://localhost:5000/uploads/1755055470937-logo.png",
+    "showLogo": false,
+    "showTextLogo": true,
+    "logoMaxHeight": 40
+  },
+  "navigation": {
+    "items": [
+      {
+        "id": "home",
+        "text": "Home",
+        "url": "/",
+        "order": 1,
+        "isActive": true
+      },
+      {
+        "id": "history",
+        "text": "History",
+        "url": "/history",
+        "order": 2,
+        "isActive": true
+      },
+      {
+        "id": "blog",
+        "text": "Blog",
+        "url": "/blog",
+        "order": 3,
+        "isActive": true
+      },
+      {
+        "id": "rooms",
+        "text": "Rooms",
+        "url": "/rooms",
+        "order": 4,
+        "isActive": true
+      },
+      {
+        "id": "admin",
+        "text": "Admin",
+        "url": "/admin",
+        "order": 5,
+        "isActive": true
+      }
+    ]
+  }
+}

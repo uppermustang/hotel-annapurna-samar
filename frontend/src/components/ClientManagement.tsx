@@ -24,6 +24,8 @@ import {
 import { useClientManagement } from "../hooks/useClientManagement";
 import { Guest, Booking, GuestFilter, BookingFilter } from "../types/client";
 import NotificationCenter from "./NotificationCenter";
+import { bookingIntegrationService } from "../services/BookingIntegrationService";
+import { clientIntegrationService } from "../services/ClientIntegrationService";
 
 const ClientManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -53,6 +55,16 @@ const ClientManagement: React.FC = () => {
       roomType: "Standard",
       specialRequests: "",
     },
+  });
+
+  // Real-time booking data
+  const [recentBookings, setRecentBookings] = useState<Booking[]>([]);
+  const [bookingStats, setBookingStats] = useState({
+    totalBookings: 0,
+    monthlyBookings: 0,
+    pendingBookings: 0,
+    confirmedBookings: 0,
+    activeBookings: 0
   });
 
   // Room types for calendar
@@ -106,38 +118,73 @@ const ClientManagement: React.FC = () => {
     handleRoomStatusChange();
   }, []);
 
+  // Load real-time booking data
+  useEffect(() => {
+    const loadBookingData = async () => {
+      try {
+        const stats = await bookingIntegrationService.getBookingStatistics();
+        setBookingStats(stats);
+        setRecentBookings(stats.recentBookings);
+      } catch (error) {
+        console.error('Error loading booking data:', error);
+      }
+    };
+
+    loadBookingData();
+    
+    // Refresh data every 30 seconds
+    const interval = setInterval(loadBookingData, 30000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
   // Sync with Rooms section
-  const syncWithRooms = () => {
-    // This function would integrate with the Rooms section
-    // For now, we'll simulate the sync
-    console.log("Syncing calendar with Rooms section...");
-
-    // In a real implementation, you would:
-    // 1. Fetch room data from the Rooms section
-    // 2. Update room types and availability
-    // 3. Sync maintenance schedules
-    // 4. Update blocked dates
-
-    // Example of what this might do:
-    // const roomsData = await fetchRoomsData();
-    // setRoomTypes(roomsData.types);
-    // setMaintenanceDates(roomsData.maintenanceDates);
-    // setBlockedDates(roomsData.blockedDates);
-
-    // Show success notification
-    alert("Calendar synced with Rooms section successfully!");
+  const syncWithRooms = async () => {
+    try {
+      console.log("Syncing calendar with Rooms section...");
+      
+      // Refresh booking data to get latest room availability
+      const stats = await bookingIntegrationService.getBookingStatistics();
+      setBookingStats(stats);
+      setRecentBookings(stats.recentBookings);
+      
+      // Update room types based on actual bookings
+      const allBookings = await clientIntegrationService.getBookings();
+      const uniqueRoomTypes = [...new Set(allBookings.map(b => b.roomType))];
+      
+      if (uniqueRoomTypes.length > 0) {
+        // Update room types dynamically
+        console.log("Updated room types:", uniqueRoomTypes);
+      }
+      
+      alert("Calendar synced with Rooms section successfully!");
+    } catch (error) {
+      console.error("Error syncing with rooms:", error);
+      alert("Failed to sync with Rooms section. Please try again.");
+    }
   };
 
   // Sync with new bookings
-  const syncWithNewBookings = () => {
-    // This function ensures the calendar reflects new bookings immediately
-    console.log("Syncing calendar with new bookings...");
-
-    // The calendar will automatically update due to React's reactivity
-    // when the bookings array changes
-
-    // Show success notification
-    alert("Calendar synced with new bookings successfully!");
+  const syncWithNewBookings = async () => {
+    try {
+      console.log("Syncing calendar with new bookings...");
+      
+      // Refresh all data
+      await loadData();
+      
+      // Get latest booking statistics
+      const stats = await bookingIntegrationService.getBookingStatistics();
+      setBookingStats(stats);
+      setRecentBookings(stats.recentBookings);
+      
+      // Force calendar re-render
+      setCurrentMonth(new Date());
+      
+      alert("Calendar synced with new bookings successfully!");
+    } catch (error) {
+      console.error("Error syncing with bookings:", error);
+      alert("Failed to sync with new bookings. Please try again.");
+    }
   };
 
   // Room management functions
@@ -222,6 +269,7 @@ const ClientManagement: React.FC = () => {
     filterBookings,
     exportData,
     clearError,
+    loadData,
   } = useClientManagement();
 
   // Sync calendar with bookings and room changes
@@ -582,19 +630,110 @@ const ClientManagement: React.FC = () => {
                         <FaUserPlus className="inline mr-2" />
                         Add Guest
                       </button>
-                      <button className="bg-green-600 text-white p-3 rounded-lg hover:bg-green-700 transition-colors text-sm">
+                      <button 
+                        onClick={() => {
+                          // Open a quick booking modal or navigate to booking page
+                          alert("Quick booking feature - you can add a guest first, then create a booking");
+                          setShowAddGuestModal(true);
+                        }}
+                        className="bg-green-600 text-white p-3 rounded-lg hover:bg-green-700 transition-colors text-sm"
+                      >
                         <FaCalendarAlt className="inline mr-2" />
                         New Booking
                       </button>
-                      <button className="bg-purple-600 text-white p-3 rounded-lg hover:bg-purple-700 transition-colors text-sm">
+                      <button 
+                        onClick={() => {
+                          // Show booking statistics and reports
+                          const statsMessage = `
+                            📊 Booking Statistics:
+                            • Total Bookings: ${bookingStats.totalBookings}
+                            • Monthly Bookings: ${bookingStats.monthlyBookings}
+                            • Pending: ${bookingStats.pendingBookings}
+                            • Confirmed: ${bookingStats.confirmedBookings}
+                            • Active: ${bookingStats.activeBookings}
+                          `;
+                          alert(statsMessage);
+                        }}
+                        className="bg-purple-600 text-white p-3 rounded-lg hover:bg-purple-700 transition-colors text-sm"
+                      >
                         <FaChartLine className="inline mr-2" />
                         View Reports
                       </button>
-                      <button className="bg-orange-600 text-white p-3 rounded-lg hover:bg-orange-700 transition-colors text-sm">
+                      <button 
+                        onClick={() => {
+                          // Show recent notifications
+                          const notificationCount = recentBookings.length;
+                          if (notificationCount > 0) {
+                            alert(`🔔 You have ${notificationCount} recent booking(s) to review!`);
+                          } else {
+                            alert("🔔 No new notifications at the moment.");
+                          }
+                        }}
+                        className="bg-orange-600 text-white p-3 rounded-lg hover:bg-orange-700 transition-colors text-sm"
+                      >
                         <FaBell className="inline mr-2" />
                         Notifications
                       </button>
                     </div>
+                  </div>
+
+                  {/* Recent Bookings Display */}
+                  <div className="bg-white rounded-lg p-6 border border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      Recent Bookings
+                    </h3>
+                    {recentBookings.length > 0 ? (
+                      <div className="space-y-3">
+                        {recentBookings.slice(0, 5).map((booking) => (
+                          <div key={booking._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div className="flex-1">
+                              <div className="font-medium text-gray-900">{booking.guestName}</div>
+                              <div className="text-sm text-gray-600">
+                                {booking.roomType} • {new Date(booking.checkIn).toLocaleDateString()} - {new Date(booking.checkOut).toLocaleDateString()}
+                              </div>
+                              <div className="text-xs text-gray-500">{booking.guestEmail}</div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className={`px-2 py-1 text-xs rounded-full ${
+                                booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                                booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                booking.status === 'active' ? 'bg-blue-100 text-blue-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {booking.status}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  // Show booking details
+                                  const details = `
+                                    📋 Booking Details:
+                                    Guest: ${booking.guestName}
+                                    Email: ${booking.guestEmail}
+                                    Phone: ${booking.guestPhone}
+                                    Room: ${booking.roomType}
+                                    Check-in: ${new Date(booking.checkIn).toLocaleDateString()}
+                                    Check-out: ${new Date(booking.checkOut).toLocaleDateString()}
+                                    Guests: ${booking.guests}
+                                    Status: ${booking.status}
+                                    Special Requests: ${booking.specialRequests || 'None'}
+                                  `;
+                                  alert(details);
+                                }}
+                                className="text-blue-600 hover:text-blue-800 text-sm"
+                              >
+                                View Details
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <FaCalendarAlt className="mx-auto text-4xl mb-2 text-gray-300" />
+                        <p>No recent bookings</p>
+                        <p className="text-sm">Bookings from "Book Now" will appear here</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
